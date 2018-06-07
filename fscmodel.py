@@ -47,14 +47,14 @@ TransList   = [Transformer() for i in range(len(TransIn.index))]
 ConnList    = [Connection() for i in range(len(ConnIn.index))]
 
 for i in range(len(SourceIn.index)):
-    #SourceList[a].name = 
+    SourceList[i].name = SourceIn.loc[i,'Name']
 
 for i in range(len(SinkIn.index)):
-    
+    SinkList[i].name = SinkIn.loc[i,'Name']
 
 for i in range(len(TransIn.index)):
-    
+    TransList[i].name = TransIn.loc[i,'Name']
 
 for i in range(len(ConnIn.index)):
-    
+    ConnList[i].name = ConnIn.loc[i,'Name']
     
