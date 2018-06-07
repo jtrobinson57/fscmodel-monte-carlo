@@ -78,7 +78,8 @@ for i in range(len(ConnIn.index)):
 
 def createModel(SourceList, SinkList, Translist, ConnList, CO2 = 40):
     M = ConcreteModel()
-    
+    M.connections = Var(ConnList, domain = NonNegativeReals)
+        
     return M
 
 def opti(model):
