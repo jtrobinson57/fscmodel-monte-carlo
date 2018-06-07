@@ -23,6 +23,7 @@ class Sink:
     capex = 0
     opex = 0
     energyType = ''
+    demand = 0
     
 class Transformer:
     name = ''
@@ -50,17 +51,30 @@ ConnList    = [Connection() for i in range(len(ConnIn.index))]
 
 for i in range(len(SourceIn.index)):
     SourceList[i].name = SourceIn.loc[i,'Name']
+    SourceList[i].capex = SourceIn.loc[i,'Capex']
+    SourceList[i].opex = SourceIn.loc[i,'Opex']
+    SourceList[i].energyType = SourceIn.loc[i,'EnergyType']
+    SourceList[i].CO2 = SourceIn.loc[i,'CO2']
 
 for i in range(len(SinkIn.index)):
     SinkList[i].name = SinkIn.loc[i,'Name']
+    SinkList[i].capex = SinkIn.loc[i,'Capex']
+    SinkList[i].opex = SinkIn.loc[i,'Opex']
+    SinkList[i].energyType = SinkIn.loc[i,'EnergyType']
+    SinkList[i].demand = SinkIn.loc[i,'Demand']
 
 for i in range(len(TransIn.index)):
     TransList[i].name = TransIn.loc[i,'Name']
+    TransList[i].inp = TransIn.loc[i,'Input']
+    TransList[i].capex = TransIn.loc[i,'Capex']
+    TransList[i].opex = TransIn.loc[i,'Opex']
+    TransList[i].totalEff = TransIn.loc[i,'TotalEff']
 
 for i in range(len(ConnIn.index)):
-
     ConnList[i].name = ConnIn.loc[i,'Name']
-
+    ConnList[i].inp = ConnIn.loc[i,'In']
+    ConnList[i].out = ConnIn.loc[i,'Out']
+    ConnList[i].energyType = ConnIn.loc[i,'EnergyType']
 
 def createModel(SourceList, SinkList, Translist, ConnList, CO2 = 40):
     M = ConcreteModel()
