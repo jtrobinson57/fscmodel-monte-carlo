@@ -24,15 +24,11 @@ class Sink:
     
 class Transformer:
     name = ''
+    inp = ''
     capex = 0
     opex = 0
     totalEff = 0
-    prod1 = ''
-    subEff1 = 0
-    prod2 = ''
-    subEff2 = 0
-    prod3 = ''
-    subEff3 = 0
+    products = {}
 
 class Connection:
     name = ''
@@ -45,20 +41,20 @@ SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['N
 TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
 ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
 
-SourceList  = [len(SourceIn.index)]
-SinkList    = [len(SinkIn.index)]
-TransList   = [len(TransIn.index)]
-ConnList    = [len(ConnIn.index)]
+SourceList  = [Source() for i in range(len(SourceIn.index))]
+SinkList    = [Sink() for i in range(len(SinkIn.index))]
+TransList   = [Transformer() for i in range(len(TransIn.index))]
+ConnList    = [Connection() for i in range(len(ConnIn.index))]
 
-for a in len(SourceIn.index):
+for i in range(len(SourceIn.index)):
+    #SourceList[a].name = 
+
+for i in range(len(SinkIn.index)):
     
 
-for b in len(SinkIn.index):
+for i in range(len(TransIn.index)):
     
 
-for c in len(TransIn.index):
-    
-
-for d in len(ConnIn.index):
+for i in range(len(ConnIn.index)):
     
     
