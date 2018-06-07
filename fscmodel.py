@@ -5,6 +5,8 @@ Created on Thu Jun  7 13:49:17 2018
 @author: j.robinson
 """
 
+from __future__ import division
+from pyomo.environ import *
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -58,3 +60,11 @@ for i in range(len(TransIn.index)):
 for i in range(len(ConnIn.index)):
     
     
+def createModel(SourceList, SinkList, Translist, ConnList, CO2 = 40):
+    M = ConcreteModel()
+    
+    return M
+
+def opti(model):
+    
+    return output
