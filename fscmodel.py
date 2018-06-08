@@ -17,6 +17,7 @@ class Source:
     opex = 0
     energyType = ''
     CO2 = 0
+    outcons = []
     
 class Sink:
     name = ''
@@ -24,6 +25,7 @@ class Sink:
     opex = 0
     energyType = ''
     demand = 0
+    incons = []
     
 class Transformer:
     name = ''
@@ -32,6 +34,8 @@ class Transformer:
     opex = 0
     totalEff = 0
     products = {}
+    incons = []
+    outcons = []
 
 class Connection:
     name = ''
@@ -79,44 +83,70 @@ for i in range(len(ConnIn.index)):
     ConnList[i].out = ConnIn.loc[i,'Out']
     ConnList[i].energyType = ConnIn.loc[i,'EnergyType']
     
+for fac in SourceList:
+    for con in ConnList:
+        if con.inp==fac.name and con.energyType==fac.energyType:
+            fac.outcons.append(con)
 
+for fac in SinkList:
+    for con in ConnList:
+        if con.out==fac.name and con.energyType==fac.energyType:
+            fac.incons.append(con)
+
+for fac in TransList:
+    for con in ConnList:
+        if con.out==fac.name and con.energyType==fac.inp:
+            fac.incons.append(con)
+        elif con.inp==fac.name and con.energyType in fac.products:
+            fac.outcons.append(con)
+
+    
 
 def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
     M = ConcreteModel()
     
-    M.connectors = Set(initialize = ConnList)
-    M.c = Param(M.connectors)
-    M.carbon = Param(M.connectors)
-    M.sources = SourceList
-    M.sinks = SinkList
-    M.trans = TransList
+    M.connectors = Set(initialize = ConnList, ordered = True) #Ordered allows you to access by number, not sure if necessary.
+    M.c = Param(M.connectors, mutable = True)
+    M.carbon = Param(M.connectors, mutable = True)
+    M.stations = Set(initialize = SourceList + TransList + SinkList)
+    M.sources = Set(initialize = SourceList)
+    M.sinks = Set(initialize = SinkList)
+    M.trans = Set(initialize = TransList)
     
-    
+    #For the amount in facilities, for calculating Opex. capex will be added to objective
+    M.facilities = Var(M.stations, domain = NonNegativeReals)
+    #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
     
     #Constructs cost vector and carbon constraints
-    for con in ConnList:
-        for source in SourceList:
-            if source.name == con.inp and source.energyType==con.energyType:
-                M.c[con] = source.opex
-                M.carbon[con] = source.CO2
-                
-                
-     #Constructs Sink constraints
-    #def sinkrule(model):
-       # return (sum(con in M.connectors if con.out==))
+    for con in M.connectors:
+        for facility in M.stations:
+            if isinstance(facility, Source):
+                if facility.name == con.inp and facility.energyType==con.energyType:
+                    M.c[con] = facility.opex
+                    M.carbon[con] = facility.CO2
+                    
     
+                
+    for i in M.carbon:
+        print(M.carbon[i])
+          
+#     #Constructs Sink constraints
+#    def sinkrule(model, sink):
+#        return sum(con in M.connections if con.out==sink.name)
+#    
+#    
     def objrule(model):
-        return summation(model.connections,model.c, index=M.connectors)
-    
-    def co2rule(model, limit):
-        return summation(model.connections,model.carbon,index = M.connectors) <= limit
-    
-    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
-    
-    M.Co2limit = Constraint(rule = co2rule)
-            
-    M.Obj = Objective(rule = objrule, sense = minimize)
+       ob = summation(model.connections,model.c, index=M.connectors)
+#    
+#    def co2rule(model, limit):
+#        return summation(model.connections,model.carbon,index = M.connectors) <= limit
+#    
+#    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
+#    
+    M.Co2limit = Constraint(expr = summation(M.connections,M.carbon,index = M.connectors) <= CO2)
+#            
+#    M.Obj = Objective(rule = objrule, sense = minimize)
     
         
         
@@ -126,6 +156,7 @@ def opti(model):
     
     return output
 
-model = createModel(SourceList, SinkList, Translist, ConnList, CO2 = 40)
+model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
+
 
 
