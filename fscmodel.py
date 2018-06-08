@@ -69,8 +69,9 @@ for i in range(len(TransIn.index)):
     TransList[i].capex = TransIn.loc[i,'Capex']
     TransList[i].opex = TransIn.loc[i,'Opex']
     TransList[i].totalEff = TransIn.loc[i,'TotalEff']
-    for j in range(len(TransIn.loc[i,['Prod1','']])):
-        TransList[i].products = dict([(),(),()])
+    for j in range(len(TransIn.loc[i,['Prod0','']])):
+        if j % 2 == len(TransIn.loc[i,['Prod0','']]) % 2:
+            TransList[i].products[TransIn.loc[i,'Prod'+str(j)]] = TransIn.loc[i,'SubEff'+str(j+1)]
 
 for i in range(len(ConnIn.index)):
     ConnList[i].name = ConnIn.loc[i,'Name']
