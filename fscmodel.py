@@ -7,6 +7,7 @@ Created on Thu Jun  7 13:49:17 2018
 
 from __future__ import division
 from pyomo.environ import *
+from pyomo.opt import SolverFactory
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,7 +19,14 @@ class Source:
     energyType = ''
     CO2 = 0
     outcons = []
+    def __str__(self):
+        return "Source:" + self.name + ", " + self.energyType
     
+    def __lt__(self,other):
+        if isinstance(other, Source):
+            return self.name < other.name
+
+
 class Sink:
     name = ''
     capex = 0
@@ -26,6 +34,8 @@ class Sink:
     energyType = ''
     demand = 0
     incons = []
+    def __str__(self):
+        return "Sink:" + self.name + ", " + self.energyType
     
 class Transformer:
     name = ''
@@ -36,12 +46,20 @@ class Transformer:
     products = {}
     incons = []
     outcons = []
+    def __str__(self):
+        return "Transformer:" + self.name
 
 class Connection:
     name = ''
     inp = ''
     out = ''
     energyType = ''
+    def __lt__(self,other):
+        if isinstance(other, Connection):
+            return self.name < other.name
+    def __str__(self):
+        return "Connection:" + self.name + ", " + self.energyType
+
 
 SourceIn    = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
 SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['NA'])
@@ -109,58 +127,67 @@ for fac in TransList:
 def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
     M = ConcreteModel()
     
-    M.connectors = Set(initialize = ConnList, ordered = True) #Ordered allows you to access by number, not sure if necessary.
+    M.connectors = Set(initialize = ConnList) #Ordered allows you to access by number, not sure if necessary.
     M.c = Param(M.connectors, mutable = True)
     M.carbon = Param(M.connectors, mutable = True)
-    M.stations = Set(initialize = SourceList + TransList + SinkList)
+#    M.stations = Set(initialize = SourceList + TransList + SinkList)
     M.sources = Set(initialize = SourceList)
     M.sinks = Set(initialize = SinkList)
     M.trans = Set(initialize = TransList)
     
-    #For the amount in facilities, for calculating Opex. capex will be added to objective
-    M.facilities = Var(M.stations, domain = NonNegativeReals)
+#    #For the amount in facilities, for calculating Opex. capex will be added to objective
+#    M.facilities = Var(M.stations, domain = NonNegativeReals)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
     
-    #Constructs cost vector and carbon constraints
-    for con in M.connectors:
-        for facility in M.stations:
-            if isinstance(facility, Source):
-                if facility.name == con.inp and facility.energyType==con.energyType:
-                    M.c[con] = facility.opex
-                    M.carbon[con] = facility.CO2
-                    
+    #Constructs cost vector and carbon constraints. Right now only coming from sources.
+    #may have to add other types later
     
-                
-    for i in M.carbon:
-        print(M.carbon[i])
-          
-#     #Constructs Sink constraints
-#    def sinkrule(model, sink):
-#        return sum(con in M.connections if con.out==sink.name)
-#    
-#    
+    for con in M.connectors:
+        added = False
+        for fac in M.sources:
+            if con in fac.outcons:
+                M.c[con] = fac.opex
+                M.carbon[con] = fac.CO2
+                added = True
+        if not added:
+            M.c[con] = 0
+            M.carbon[con] = 0
+    
+    
+    def transrule(model):
+        return None
+
+    def sinkrule(model, sink):
+        return sum(M.connections[con] for con in M.connectors and sink.incons) == sink.demand
+    
+    
+    
     def objrule(model):
        ob = summation(model.connections,model.c, index=M.connectors)
-#    
-#    def co2rule(model, limit):
-#        return summation(model.connections,model.carbon,index = M.connectors) <= limit
-#    
-#    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
-#    
+       return ob
+    
+
+    
+    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
+    
     M.Co2limit = Constraint(expr = summation(M.connections,M.carbon,index = M.connectors) <= CO2)
-#            
-#    M.Obj = Objective(rule = objrule, sense = minimize)
+            
+    M.Obj = Objective(rule = objrule, sense = minimize)
     
         
         
     return M
 
 def opti(model):
-    
-    return output
+    opt = SolverFactory('gurobi')
+    results = opt.solve(model)
+    print(model.display())
+    return results
 
 model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
 
+results = opti(model)
+print(results)
 
 
