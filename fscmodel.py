@@ -75,7 +75,7 @@ for i in range(len(TransIn.index)):
     TransList[i].totalEff = TransIn.loc[i,'TotalEff']
     for j in range(len(TransIn.loc[i,['Prod0','']])):
         if j % 2 == len(TransIn.loc[i,['Prod0','']]) % 2:
-            TransList[i].products[TransIn.loc[i,'Prod'+str(j)]] = TransIn.loc[i,'SubEff'+str(j+1)]
+            TransList[i].products[TransIn.loc[i,'Prod'+str(j)]] = TransIn.loc[i,'SubEff'+str(j)]
 
 for i in range(len(ConnIn.index)):
     ConnList[i].name = ConnIn.loc[i,'Name']
