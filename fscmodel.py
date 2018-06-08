@@ -71,7 +71,7 @@ for i in range(len(TransIn.index)):
     TransList[i].totalEff = TransIn.loc[i,'TotalEff']
     for j in range(len(TransIn.loc[i,['Prod0','']])):
         if j % 2 == len(TransIn.loc[i,['Prod0','']]) % 2:
-            TransList[i].products[TransIn.loc[i,'Prod'+str(j)]] = TransIn.loc[i,'SubEff'+str(j+1)]
+            TransList[i].products[TransIn.loc[i,'Prod'+str(j)]] = TransIn.loc[i,'SubEff'+str(j)]
 
 for i in range(len(ConnIn.index)):
     ConnList[i].name = ConnIn.loc[i,'Name']
@@ -80,52 +80,52 @@ for i in range(len(ConnIn.index)):
     ConnList[i].energyType = ConnIn.loc[i,'EnergyType']
     
 
-#
-#def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
-#    M = ConcreteModel()
-#    
-#    M.connectors = Set(initialize = ConnList)
-#    M.c = Param(M.connectors)
-#    M.carbon = Param(M.connectors)
-#    M.sources = SourceList
-#    M.sinks = SinkList
-#    M.trans = TransList
-#    
-#    
-#    M.connections = Var(M.connectors, domain = NonNegativeReals)
-#    
-#    #Constructs cost vector and carbon constraints
-#    for con in ConnList:
-#        for source in SourceList:
-#            if source.name == con.inp and source.energyType==con.energyType:
-#                M.c[con] = source.opex
-#                M.carbon[con] = source.CO2
-#                
-#                
-#     #Constructs Sink constraints
-#    #def sinkrule(model):
-#       # return (sum(con in M.connectors if con.out==))
-#    
-#    def objrule(model):
-#        return summation(model.connections,model.c, index=M.connectors)
-#    
-#    def co2rule(model, limit):
-#        return summation(model.connections,model.carbon,index = M.connectors) <= limit
-#    
-#    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
-#    
-#    M.Co2limit = Constraint(rule = co2rule)
-#            
-#    M.Obj = Objective(rule = objrule, sense = minimize)
-#    
-#        
-#        
-#    return M
-#
-#def opti(model):
-#    
-#    return output
-#
-#model = createModel(SourceList, SinkList, Translist, ConnList, CO2 = 40)
-#
-#
+
+def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
+    M = ConcreteModel()
+    
+    M.connectors = Set(initialize = ConnList)
+    M.c = Param(M.connectors)
+    M.carbon = Param(M.connectors)
+    M.sources = SourceList
+    M.sinks = SinkList
+    M.trans = TransList
+    
+    
+    M.connections = Var(M.connectors, domain = NonNegativeReals)
+    
+    #Constructs cost vector and carbon constraints
+    for con in ConnList:
+        for source in SourceList:
+            if source.name == con.inp and source.energyType==con.energyType:
+                M.c[con] = source.opex
+                M.carbon[con] = source.CO2
+                
+                
+     #Constructs Sink constraints
+    #def sinkrule(model):
+       # return (sum(con in M.connectors if con.out==))
+    
+    def objrule(model):
+        return summation(model.connections,model.c, index=M.connectors)
+    
+    def co2rule(model, limit):
+        return summation(model.connections,model.carbon,index = M.connectors) <= limit
+    
+    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
+    
+    M.Co2limit = Constraint(rule = co2rule)
+            
+    M.Obj = Objective(rule = objrule, sense = minimize)
+    
+        
+        
+    return M
+
+def opti(model):
+    
+    return output
+
+model = createModel(SourceList, SinkList, Translist, ConnList, CO2 = 40)
+
+
