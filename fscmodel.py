@@ -54,6 +54,10 @@ class Transformer:
     
     def __str__(self):
         return "Transformer:" + self.name
+    
+    def __lt__(self,other):
+        if isinstance(other, Transformer):
+            return self.name < other.name
 
 class Connection:
     def __init__(self,name,inp,out,energyType):
@@ -106,7 +110,7 @@ for i in range(len(TransIn.index)):
     y = 0
     
     for j in range(len(TransIn.loc[i,'Prod0':])):
-        if k % 2 == 0:
+        if k % 2 == 0 and isinstance(TransIn.loc[i,'Prod'+str(x)],str):
             TransList[i].products[TransIn.loc[i,'Prod'+str(x)]] = TransIn.loc[i,'SubEff'+str(x)]
             x = x + 1
         k = k + 1
@@ -141,7 +145,6 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
     M.connectors = Set(initialize = ConnList) #Ordered allows you to access by number, not sure if necessary.
     M.c = Param(M.connectors, mutable = True)
     M.carbon = Param(M.connectors, mutable = True)
-#    M.stations = Set(initialize = SourceList + TransList + SinkList)
     M.sources = Set(initialize = SourceList)
     M.sinks = Set(initialize = SinkList)
     M.trans = Set(initialize = TransList)
@@ -150,6 +153,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
 #    M.facilities = Var(M.stations, domain = NonNegativeReals)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
+    M.transtotals = Var(M.trans, domain = NonNegativeReals)
     
     #Constructs cost vector and carbon constraints. Right now only coming from sources.
     #may have to add other types later
@@ -159,7 +163,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
         for fac in M.sources:
             if con in fac.outcons:
                 M.c[con] = fac.opex
-                M.carbon[con] = fac.CO2
+                M.carbon[con] = fac.CO2 
                 added = True
         if not added:
             M.c[con] = 0
