@@ -117,10 +117,7 @@ for i in range(len(ConnIn.index)):
     ConnList[i].inp = ConnIn.loc[i,'In']
     ConnList[i].out = ConnIn.loc[i,'Out']
     ConnList[i].energyType = ConnIn.loc[i,'EnergyType']
-<<<<<<< HEAD
-=======
 
->>>>>>> 63de732afefef68e3e33d3d807f3f2ae9ad09ec9
     
 for fac in SourceList:
     for con in ConnList:
@@ -138,12 +135,7 @@ for fac in TransList:
             fac.incons.append(con)
         elif con.inp==fac.name and con.energyType in fac.products:
             fac.outcons.append(con)
-<<<<<<< HEAD
-=======
 
-
-    
->>>>>>> 63de732afefef68e3e33d3d807f3f2ae9ad09ec9
 
 def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
     M = ConcreteModel()
