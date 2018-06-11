@@ -203,7 +203,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
 
 def opti(model):
     opt = SolverFactory('gurobi')
-    results = opt.solve(model)
+    results = opt.solve(model, tee = True)
     print(model.display())
     return results
 
@@ -217,6 +217,5 @@ def checkModel():
 model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
 
 results = opti(model)
-#print(results)
 
 
