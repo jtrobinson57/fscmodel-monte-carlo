@@ -41,6 +41,10 @@ class Sink:
     def __str__(self):
         return "Sink:" + self.name + ", " + self.energyType
     
+    def __lt__(self,other):
+        if isinstance(other, Sink):
+            return self.name < other.name
+    
 class Transformer:
     def __init__(self,name,inp,capex=0,opex=0,totalEff=0):
         self.name = name
