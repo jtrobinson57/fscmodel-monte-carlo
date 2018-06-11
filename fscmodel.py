@@ -13,12 +13,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Source:
-    def __init__(self,name,energyType,capex=0,opex=0,C02 = 0):
+    def __init__(self,name,energyType,capex=0,opex=0,CO2 = 0):
         self.name = name
         self.energyType = energyType
         self.capex = capex
         self.opex = opex
-        self.CO2 = 0
+        self.CO2 = CO2
         self.outcons = []
     
     def __str__(self):
@@ -89,7 +89,7 @@ for i in range(len(SourceIn.index)):
                              energyType = SourceIn.loc[i,'EnergyType'],
                              capex=SourceIn.loc[i,'Capex'], 
                              opex = SourceIn.loc[i,'Opex'], 
-                             C02 = SourceIn.loc[i,'CO2']))
+                             CO2 = SourceIn.loc[i,'CO2']))
 
 for i in range(len(SinkIn.index)):
     SinkList.append(Sink(name = SinkIn.loc[i,'Name'],
@@ -153,7 +153,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
 #    M.facilities = Var(M.stations, domain = NonNegativeReals)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
-    M.transtotals = Var(M.trans, domain = NonNegativeReals)
+    M.trouttotals = Var(M.trans, domain = NonNegativeReals)
     
     #Constructs cost vector and carbon constraints. Right now only coming from sources.
     #may have to add other types later
@@ -169,20 +169,32 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
             M.c[con] = 0
             M.carbon[con] = 0
     
+#    for con in M.connectors:
+#        print(M.carbon[con].value)
     
-    def transrule(model):
-        return None
+    def transrule(model, tra):
+        return M.trouttotals[tra] == tra.totalEff * sum(M.connections[con] for con in tra.incons)
+    
+    def productratiorule(model, con):
+        for tra in TransList:
+            if con in tra.outcons:
+                etype = con.energyType
+                return tra.products[etype] * M.trouttotals[tra] == M.connections[con]
+        return Constraint.Skip
+
+
 
     def sinkrule(model, sink):
         return sum(M.connections[con] for con in M.connectors and sink.incons) == sink.demand
     
     
-    
     def objrule(model):
        ob = summation(model.connections,model.c, index=M.connectors)
        return ob
-    
 
+    M.productconstraint = Constraint(M.connectors, rule = productratiorule)
+    
+    M.transconstraint = Constraint(M.trans, rule = transrule)
     
     M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
     
