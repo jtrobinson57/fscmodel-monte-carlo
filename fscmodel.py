@@ -74,10 +74,6 @@ SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['N
 TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
 ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
 
-#SourceList  = [Source() for i in range(len(SourceIn.index))]
-#SinkList    = [Sink() for i in range(len(SinkIn.index))]
-#TransList   = [Transformer() for i in range(len(TransIn.index))]
-#ConnList    = [Connection() for i in range(len(ConnIn.index))]
 SourceList = []
 SinkList = []
 TransList = []
@@ -90,10 +86,6 @@ for i in range(len(SourceIn.index)):
                              capex=SourceIn.loc[i,'Capex'], 
                              opex = SourceIn.loc[i,'Opex'], 
                              C02 = SourceIn.loc[i,'CO2']))
-#    SourceList[i].capex = SourceIn.loc[i,'Capex']
-#    SourceList[i].opex = SourceIn.loc[i,'Opex']
-#    SourceList[i].energyType = SourceIn.loc[i,'EnergyType']
-#    SourceList[i].CO2 = SourceIn.loc[i,'CO2']
 
 for i in range(len(SinkIn.index)):
     SinkList.append(Sink(name = SinkIn.loc[i,'Name'],
@@ -101,18 +93,13 @@ for i in range(len(SinkIn.index)):
                          capex = SinkIn.loc[i,'Capex'],
                          opex = SinkIn.loc[i,'Opex'],
                          demand = SinkIn.loc[i,'Demand']))
-#    SinkList[i].name = SinkIn.loc[i,'Name']
-#    SinkList[i].capex = SinkIn.loc[i,'Capex']
-#    SinkList[i].opex = SinkIn.loc[i,'Opex']
-#    SinkList[i].energyType = SinkIn.loc[i,'EnergyType']
-#    SinkList[i].demand = SinkIn.loc[i,'Demand']
 
 for i in range(len(TransIn.index)):
-    TransList[i].name = TransIn.loc[i,'Name']
-    TransList[i].inp = TransIn.loc[i,'Input']
-    TransList[i].capex = TransIn.loc[i,'Capex']
-    TransList[i].opex = TransIn.loc[i,'Opex']
-    TransList[i].totalEff = TransIn.loc[i,'TotalEff']
+    TransList.append(Transformer(name = TransIn.loc[i,'Name'],
+                                 inp = TransIn.loc[i,'Input'],
+                                 capex = TransIn.loc[i,'Capex'],
+                                 opex = TransIn.loc[i,'Opex'],
+                                 totalEff = TransIn.loc[i,'TotalEff']))
     
     k = 0
     x = 0
@@ -124,11 +111,10 @@ for i in range(len(TransIn.index)):
         k = k + 1
 
 for i in range(len(ConnIn.index)):
-    ConnList[i].name = ConnIn.loc[i,'Name']
-    ConnList[i].inp = ConnIn.loc[i,'In']
-    ConnList[i].out = ConnIn.loc[i,'Out']
-    ConnList[i].energyType = ConnIn.loc[i,'EnergyType']
-
+    ConnList.append(Connection(name = ConnIn.loc[i,'Name'],
+                              inp = ConnIn.loc[i,'In'],
+                              out = ConnIn.loc[i,'Out'],
+                              energyType = ConnIn.loc[i,'EnergyType']))
     
 for fac in SourceList:
     for con in ConnList:
