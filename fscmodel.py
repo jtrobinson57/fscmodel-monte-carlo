@@ -82,7 +82,11 @@ SourceList = []
 SinkList   = []
 TransList  = []
 ConnList   = []
+FuelTypeList = []
 
+for i in range(len(SourceIn.index)):
+    if not SourceIn.loc[i,'EnergyType'] in FuelTypeList:
+        FuelTypeList.append(SourceIn.loc[i,'EnergyType'])
 
 for i in range(len(SourceIn.index)):
     SourceList.append(Source(name = SourceIn.loc[i,'Name'],
@@ -217,6 +221,27 @@ def checkModel():
 model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
 
 results = opti(model)
-#print(results)
 
+model.connections[ConnList[0]].value
 
+outSources = []
+
+for i in range(len(SourceList)):
+    if not SourceList[i].energyType in outSources:
+        outSources.append(SourceList[i].energyType)
+
+outMJ = [0] * len(outSources)
+
+for i in range(len(ConnList)):
+    for j in range(len(outSources)):
+        if ConnList[i].energyType == outSources[j]:
+            outMJ[j] = outMJ[j] + model.connections[ConnList[i]].value
+
+outdf = pd.DataFrame({'Fuel Type' : outSources,
+                             'MJ by Fuel' : outMJ,
+                             'Total System Cost' : model.Obj()})
+    
+for i in range(1,len(outdf.index)):
+    outdf.at[i,'Total System Cost'] = np.nan
+
+outdf.to_excel('output.xlsx', sheet_name='Sheet1')
