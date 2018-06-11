@@ -107,7 +107,6 @@ for i in range(len(TransIn.index)):
     
     k = 0
     x = 0
-    y = 0
     
     for j in range(len(TransIn.loc[i,'Prod0':])):
         if k % 2 == 0 and isinstance(TransIn.loc[i,'Prod'+str(x)],str):
