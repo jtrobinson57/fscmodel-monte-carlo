@@ -79,9 +79,9 @@ TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_val
 ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
 
 SourceList = []
-SinkList = []
-TransList = []
-ConnList = []
+SinkList   = []
+TransList  = []
+ConnList   = []
 
 
 for i in range(len(SourceIn.index)):
@@ -107,7 +107,6 @@ for i in range(len(TransIn.index)):
     
     k = 0
     x = 0
-    
     for j in range(len(TransIn.loc[i,'Prod0':])):
         if k % 2 == 0 and isinstance(TransIn.loc[i,'Prod'+str(x)],str):
             TransList[i].products[TransIn.loc[i,'Prod'+str(x)]] = TransIn.loc[i,'SubEff'+str(x)]
@@ -152,11 +151,11 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
 #    M.facilities = Var(M.stations, domain = NonNegativeReals)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
+    #Amount coming out of a transformer
     M.trouttotals = Var(M.trans, domain = NonNegativeReals)
     
     #Constructs cost vector and carbon constraints. Right now only coming from sources.
     #may have to add other types later
-    
     for con in M.connectors:
         added = False
         for fac in M.sources:
@@ -168,8 +167,6 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
             M.c[con] = 0
             M.carbon[con] = 0
     
-#    for con in M.connectors:
-#        print(M.carbon[con].value)
     
     def transrule(model, tra):
         return M.trouttotals[tra] == tra.totalEff * sum(M.connections[con] for con in tra.incons)
@@ -201,8 +198,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
             
     M.Obj = Objective(rule = objrule, sense = minimize)
     
-        
-        
+            
     return M
 
 def opti(model):
@@ -211,9 +207,16 @@ def opti(model):
     print(model.display())
     return results
 
+def formatOutput():
+    return None
+
+def checkModel():
+    return None
+
+
 model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
 
 results = opti(model)
-print(results)
+#print(results)
 
 
