@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Source:
-    def __init__(self,name,energyType,capex=0,opex=0, C02 = 0):
+    def __init__(self,name,energyType,capex=0,opex=0,C02 = 0):
         self.name = name
         self.energyType = energyType
         self.capex = capex
@@ -30,39 +30,38 @@ class Source:
 
 
 class Sink:
-    def __init__(self, **kwargs):
-        self.name = kwargs.get('name',"")
-        self.energyType = kwargs.get('energyType',"")
-        self.capex = kwargs.get('capex', 0)
-        self.opex = kwargs.get('opex', 0)
-        self.demand = kwargs.get('demand', 0)
+    def __init__(self,name,capex,opex,energyType,demand):
+        self.name = name
+        self.energyType = energyType
+        self.capex = capex
+        self.opex = opex
+        self.demand = demand
         self.incons = []
-#    name = ''
-#    capex = 0
-#    opex = 0
-#    energyType = ''
-#    demand = 0
-#    incons = []
+        
     def __str__(self):
         return "Sink:" + self.name + ", " + self.energyType
     
 class Transformer:
-    name = ''
-    inp = ''
-    capex = 0
-    opex = 0
-    totalEff = 0
-    products = {}
-    incons = []
-    outcons = []
+    def __init__(self,name,inp,capex=0,opex=0,totalEff=0):
+        self.name = name
+        self.inp = inp
+        self.capex = capex
+        self.opex = opex
+        self.totalEff = totalEff
+        self.products = {}
+        self.incons = []
+        self.outcons = []
+    
     def __str__(self):
         return "Transformer:" + self.name
 
 class Connection:
-    name = ''
-    inp = ''
-    out = ''
-    energyType = ''
+    def __init__(self,name,inp,out,energyType):
+        self.name = name
+        self.inp = inp
+        self.out = out
+        self.energyType = energyType
+    
     def __lt__(self,other):
         if isinstance(other, Connection):
             return self.name < other.name
@@ -77,12 +76,12 @@ ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_value
 
 #SourceList  = [Source() for i in range(len(SourceIn.index))]
 #SinkList    = [Sink() for i in range(len(SinkIn.index))]
-TransList   = [Transformer() for i in range(len(TransIn.index))]
-ConnList    = [Connection() for i in range(len(ConnIn.index))]
+#TransList   = [Transformer() for i in range(len(TransIn.index))]
+#ConnList    = [Connection() for i in range(len(ConnIn.index))]
 SourceList = []
 SinkList = []
-#TransList = []
-#ConnList = []
+TransList = []
+ConnList = []
 
 
 for i in range(len(SourceIn.index)):
