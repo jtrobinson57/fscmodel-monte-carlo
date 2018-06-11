@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 class Source:
     def __init__(self,name,energyType,capex=0,opex=0, C02 = 0):
         self.name = name
+        self.energyType = energyType
         self.capex = capex
         self.opex = opex
-        self.energyType = energyType
         self.CO2 = 0
         self.outcons = []
     
@@ -30,12 +30,19 @@ class Source:
 
 
 class Sink:
-    name = ''
-    capex = 0
-    opex = 0
-    energyType = ''
-    demand = 0
-    incons = []
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('name',"")
+        self.energyType = kwargs.get('energyType',"")
+        self.capex = kwargs.get('capex', 0)
+        self.opex = kwargs.get('opex', 0)
+        self.demand = kwargs.get('demand', 0)
+        self.incons = []
+#    name = ''
+#    capex = 0
+#    opex = 0
+#    energyType = ''
+#    demand = 0
+#    incons = []
     def __str__(self):
         return "Sink:" + self.name + ", " + self.energyType
     
@@ -70,12 +77,12 @@ ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_value
 
 #SourceList  = [Source() for i in range(len(SourceIn.index))]
 #SinkList    = [Sink() for i in range(len(SinkIn.index))]
-#TransList   = [Transformer() for i in range(len(TransIn.index))]
-#ConnList    = [Connection() for i in range(len(ConnIn.index))]
+TransList   = [Transformer() for i in range(len(TransIn.index))]
+ConnList    = [Connection() for i in range(len(ConnIn.index))]
 SourceList = []
 SinkList = []
-TransList = []
-ConnList = []
+#TransList = []
+#ConnList = []
 
 
 for i in range(len(SourceIn.index)):
@@ -90,11 +97,16 @@ for i in range(len(SourceIn.index)):
 #    SourceList[i].CO2 = SourceIn.loc[i,'CO2']
 
 for i in range(len(SinkIn.index)):
-    SinkList[i].name = SinkIn.loc[i,'Name']
-    SinkList[i].capex = SinkIn.loc[i,'Capex']
-    SinkList[i].opex = SinkIn.loc[i,'Opex']
-    SinkList[i].energyType = SinkIn.loc[i,'EnergyType']
-    SinkList[i].demand = SinkIn.loc[i,'Demand']
+    SinkList.append(Sink(name = SinkIn.loc[i,'Name'],
+                         energyType = SinkIn.loc[i,'EnergyType'],
+                         capex = SinkIn.loc[i,'Capex'],
+                         opex = SinkIn.loc[i,'Opex'],
+                         demand = SinkIn.loc[i,'Demand']))
+#    SinkList[i].name = SinkIn.loc[i,'Name']
+#    SinkList[i].capex = SinkIn.loc[i,'Capex']
+#    SinkList[i].opex = SinkIn.loc[i,'Opex']
+#    SinkList[i].energyType = SinkIn.loc[i,'EnergyType']
+#    SinkList[i].demand = SinkIn.loc[i,'Demand']
 
 for i in range(len(TransIn.index)):
     TransList[i].name = TransIn.loc[i,'Name']
