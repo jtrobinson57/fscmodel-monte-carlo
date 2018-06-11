@@ -13,12 +13,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Source:
-    name = ''
-    capex = 0
-    opex = 0
-    energyType = ''
-    CO2 = 0
-    outcons = []
+    def __init__(self,name,energyType,capex=0,opex=0, C02 = 0):
+        self.name = name
+        self.capex = capex
+        self.opex = opex
+        self.energyType = energyType
+        self.CO2 = 0
+        self.outcons = []
+    
     def __str__(self):
         return "Source:" + self.name + ", " + self.energyType
     
@@ -66,17 +68,26 @@ SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['N
 TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
 ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
 
-SourceList  = [Source() for i in range(len(SourceIn.index))]
-SinkList    = [Sink() for i in range(len(SinkIn.index))]
-TransList   = [Transformer() for i in range(len(TransIn.index))]
-ConnList    = [Connection() for i in range(len(ConnIn.index))]
+#SourceList  = [Source() for i in range(len(SourceIn.index))]
+#SinkList    = [Sink() for i in range(len(SinkIn.index))]
+#TransList   = [Transformer() for i in range(len(TransIn.index))]
+#ConnList    = [Connection() for i in range(len(ConnIn.index))]
+SourceList = []
+SinkList = []
+TransList = []
+ConnList = []
+
 
 for i in range(len(SourceIn.index)):
-    SourceList[i].name = SourceIn.loc[i,'Name']
-    SourceList[i].capex = SourceIn.loc[i,'Capex']
-    SourceList[i].opex = SourceIn.loc[i,'Opex']
-    SourceList[i].energyType = SourceIn.loc[i,'EnergyType']
-    SourceList[i].CO2 = SourceIn.loc[i,'CO2']
+    SourceList.append(Source(name = SourceIn.loc[i,'Name'],
+                             energyType = SourceIn.loc[i,'EnergyType'],
+                             capex=SourceIn.loc[i,'Capex'], 
+                             opex = SourceIn.loc[i,'Opex'], 
+                             C02 = SourceIn.loc[i,'CO2']))
+#    SourceList[i].capex = SourceIn.loc[i,'Capex']
+#    SourceList[i].opex = SourceIn.loc[i,'Opex']
+#    SourceList[i].energyType = SourceIn.loc[i,'EnergyType']
+#    SourceList[i].CO2 = SourceIn.loc[i,'CO2']
 
 for i in range(len(SinkIn.index)):
     SinkList[i].name = SinkIn.loc[i,'Name']
@@ -106,6 +117,10 @@ for i in range(len(ConnIn.index)):
     ConnList[i].inp = ConnIn.loc[i,'In']
     ConnList[i].out = ConnIn.loc[i,'Out']
     ConnList[i].energyType = ConnIn.loc[i,'EnergyType']
+<<<<<<< HEAD
+=======
+
+>>>>>>> 63de732afefef68e3e33d3d807f3f2ae9ad09ec9
     
 for fac in SourceList:
     for con in ConnList:
@@ -123,6 +138,12 @@ for fac in TransList:
             fac.incons.append(con)
         elif con.inp==fac.name and con.energyType in fac.products:
             fac.outcons.append(con)
+<<<<<<< HEAD
+=======
+
+
+    
+>>>>>>> 63de732afefef68e3e33d3d807f3f2ae9ad09ec9
 
 def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
     M = ConcreteModel()
