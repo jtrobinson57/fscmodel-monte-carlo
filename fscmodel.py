@@ -194,7 +194,6 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
         return Constraint.Skip
 
 
-
     def sinkrule(model, sink):
         return sum(M.connections[con] for con in M.connectors and sink.incons) == sink.demand
     
@@ -222,8 +221,6 @@ def opti(model):
     print(model.display())
     return results
 
-def formatOutput():
-    return None
 
 def checkModel():
     return None
@@ -233,8 +230,8 @@ model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
 
 results = opti(model)
 
-model.connections[ConnList[0]].value
 
+#Output formatting starts here
 
 outMJ = [0] * len(FuelTypeList)
 
