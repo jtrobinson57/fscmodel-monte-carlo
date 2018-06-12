@@ -41,6 +41,10 @@ class Sink:
     def __str__(self):
         return "Sink:" + self.name + ", " + self.energyType
     
+    def __lt__(self,other):
+        if isinstance(other, Sink):
+            return self.name < other.name
+    
 class Transformer:
     def __init__(self,name,inp,capex=0,opex=0,totalEff=0):
         self.name = name
@@ -99,10 +103,20 @@ TransList  = []
 ConnList   = []
 HubList    = []
 FuelTypeList = []
+DemandTypeList = []
 
+#Energy sources available
 for i in range(len(SourceIn.index)):
     if not SourceIn.loc[i,'EnergyType'] in FuelTypeList:
         FuelTypeList.append(SourceIn.loc[i,'EnergyType'])
+        
+#Energy types demanded        
+for i in range(len(SinkIn.index)):
+    if not SinkIn.loc[i, 'EnergyType'] in DemandTypeList:
+        DemandTypeList.append(SinkIn.loc[i, 'EnergyType'])
+
+EnergyList = FuelTypeList + DemandTypeList
+        
 
 for i in range(len(SourceIn.index)):
     SourceList.append(Source(name = SourceIn.loc[i,'Name'],
@@ -128,8 +142,12 @@ for i in range(len(TransIn.index)):
     k = 0
     x = 0
     for j in range(len(TransIn.loc[i,'Prod0':])):
-        if k % 2 == 0 and isinstance(TransIn.loc[i,'Prod'+str(x)],str):
-            TransList[i].products[TransIn.loc[i,'Prod'+str(x)]] = TransIn.loc[i,'SubEff'+str(x)]
+        product = TransIn.loc[i,'Prod'+str(x)]
+        if not product in EnergyList:
+            EnergyList.append(product)
+        
+        if k % 2 == 0 and isinstance(product,str):
+            TransList[i].products[product] = TransIn.loc[i,'SubEff'+str(x)]
             x = x + 1
         k = k + 1
 
@@ -205,7 +223,6 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
         return Constraint.Skip
 
 
-
     def sinkrule(model, sink):
         return sum(M.connections[con] for con in M.connectors and sink.incons) == sink.demand
     
@@ -233,35 +250,41 @@ def opti(model):
     print(model.display())
     return results
 
-def formatOutput():
+
+def checkModel(ConnList, entypes):
+    for con in ConnList:
+        if con.energyType not in entypes:
+            raise ValueError(str(con) + ' has an unrecognized energy type.')
+    
+        
+    #Connections. Check that no two have same input and output and energy type.
     return None
 
-def checkModel():
-    return None
-
+checkModel(ConnList, EnergyList)
 
 model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
 
 results = opti(model)
 
-model.connections[ConnList[0]].value
 
-outSources = []
+#Output formatting starts here
 
-for i in range(len(SourceList)):
-    if not SourceList[i].energyType in outSources:
-        outSources.append(SourceList[i].energyType)
-
-outMJ = [0] * len(outSources)
+outMJ = [0] * len(FuelTypeList)
 
 for i in range(len(ConnList)):
-    for j in range(len(outSources)):
-        if ConnList[i].energyType == outSources[j]:
+    for j in range(len(FuelTypeList)):
+        if ConnList[i].energyType == FuelTypeList[j]:
             outMJ[j] = outMJ[j] + model.connections[ConnList[i]].value
 
+<<<<<<< HEAD
 outdf = pd.DataFrame({'Fuel Type' : outSources,
                       'MJ by Fuel' : outMJ,
                       'Total System Cost' : model.Obj()})
+=======
+outdf = pd.DataFrame({'Fuel Type' : FuelTypeList,
+                             'MJ by Fuel' : outMJ,
+                             'Total System Cost' : model.Obj()})
+>>>>>>> d579214faa5284e8e15b881693537c5b215512bd
     
 for i in range(1,len(outdf.index)):
     outdf.at[i,'Total System Cost'] = np.nan
