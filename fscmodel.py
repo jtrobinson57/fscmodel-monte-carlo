@@ -72,16 +72,32 @@ class Connection:
     def __str__(self):
         return "Connection:" + self.name + ", " + self.energyType
 
+class Hub:
+    def __init__(self,name,energyType,capex=0,opex=0):
+        self.name = name
+        self.energyType = energyType
+        self.capex = capex
+        self.opex = opex
+    
+    def __str__(self):
+        return "Hub:" + self.name + ", " + self.energyType
+    
+    def __lt__(self,other):
+        if isinstance(other, Hub):
+            return self.name < other.name
+
 
 SourceIn    = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
 SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['NA'])
 TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
 ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
+HubIn      = pd.read_excel('input.xlsx', 'Hubs', index_col=None, na_values=['NA'])
 
 SourceList = []
 SinkList   = []
 TransList  = []
 ConnList   = []
+HubList    = []
 FuelTypeList = []
 
 for i in range(len(SourceIn.index)):
@@ -122,6 +138,12 @@ for i in range(len(ConnIn.index)):
                               inp = ConnIn.loc[i,'In'],
                               out = ConnIn.loc[i,'Out'],
                               energyType = ConnIn.loc[i,'EnergyType']))
+    
+for i in range(len(HubIn.index)):
+    HubList.append(Hub(name = HubIn.loc[i,'Name'],
+                       energyType = HubIn.loc[i,'EnergyType'],
+                       capex = HubIn.loc[i,'Capex'],
+                       opex = HubIn.loc[i,'Opex']))
     
 for fac in SourceList:
     for con in ConnList:
@@ -238,8 +260,8 @@ for i in range(len(ConnList)):
             outMJ[j] = outMJ[j] + model.connections[ConnList[i]].value
 
 outdf = pd.DataFrame({'Fuel Type' : outSources,
-                             'MJ by Fuel' : outMJ,
-                             'Total System Cost' : model.Obj()})
+                      'MJ by Fuel' : outMJ,
+                      'Total System Cost' : model.Obj()})
     
 for i in range(1,len(outdf.index)):
     outdf.at[i,'Total System Cost'] = np.nan
