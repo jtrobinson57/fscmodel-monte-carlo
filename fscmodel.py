@@ -87,10 +87,17 @@ SinkList   = []
 TransList  = []
 ConnList   = []
 FuelTypeList = []
+DemandTypeList = []
 
+#Energy sources available
 for i in range(len(SourceIn.index)):
     if not SourceIn.loc[i,'EnergyType'] in FuelTypeList:
         FuelTypeList.append(SourceIn.loc[i,'EnergyType'])
+        
+#Energy types demanded        
+for i in range(len(SinkIn.index)):
+    if not SinkIn.loc[i, 'EnergyType'] in DemandTypeList:
+        DemandTypeList.append(SinkIn.loc[i, 'EnergyType'])
 
 for i in range(len(SourceIn.index)):
     SourceList.append(Source(name = SourceIn.loc[i,'Name'],
@@ -228,20 +235,15 @@ results = opti(model)
 
 model.connections[ConnList[0]].value
 
-outSources = []
 
-for i in range(len(SourceList)):
-    if not SourceList[i].energyType in outSources:
-        outSources.append(SourceList[i].energyType)
-
-outMJ = [0] * len(outSources)
+outMJ = [0] * len(FuelTypeList)
 
 for i in range(len(ConnList)):
-    for j in range(len(outSources)):
-        if ConnList[i].energyType == outSources[j]:
+    for j in range(len(FuelTypeList)):
+        if ConnList[i].energyType == FuelTypeList[j]:
             outMJ[j] = outMJ[j] + model.connections[ConnList[i]].value
 
-outdf = pd.DataFrame({'Fuel Type' : outSources,
+outdf = pd.DataFrame({'Fuel Type' : FuelTypeList,
                              'MJ by Fuel' : outMJ,
                              'Total System Cost' : model.Obj()})
     
