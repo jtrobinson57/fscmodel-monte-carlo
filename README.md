@@ -2,4 +2,6 @@
 
 Fuel Supply Chain Model
 
-note: capex is currently not calculated
+Given input of energy sources, sinks, transformers, and the connections between them (see input.xlsx for format), finds the optimal network flow. The problem minimizes cost while satisfying a constraint on carbon dioxide production.
+
+note: capex and non-source opex is currently not considered
