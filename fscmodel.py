@@ -99,6 +99,9 @@ for i in range(len(SinkIn.index)):
     if not SinkIn.loc[i, 'EnergyType'] in DemandTypeList:
         DemandTypeList.append(SinkIn.loc[i, 'EnergyType'])
 
+EnergyList = FuelTypeList + DemandTypeList
+        
+
 for i in range(len(SourceIn.index)):
     SourceList.append(Source(name = SourceIn.loc[i,'Name'],
                              energyType = SourceIn.loc[i,'EnergyType'],
@@ -222,9 +225,16 @@ def opti(model):
     return results
 
 
-def checkModel():
+def checkModel(ConnList, entypes):
+    for con in ConnList:
+        if con.energyType not in entypes:
+            raise ValueError(str(con) + ' has an unrecognized energy type.')
+    
+        
+    #Connections. Check that no two have same input and output and energy type.
     return None
 
+checkModel(ConnList, EnergyList)
 
 model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
 
