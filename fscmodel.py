@@ -205,18 +205,21 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList,CO2 = 40):
     M.carbon = Param(M.connectors, mutable = True)
     M.cape = Param(M.stations, mutable = True)
     
-    #For the amount in facilities, for calculating Opex. capex will be added to objective
+    #For the amount in facilities, for calculating Opex.
     M.facilities = Var( M.stations, domain = NonNegativeReals)
+    #Whether a facility is being used. For calculating Capex
     M.isopen = Var(M.stations, domain = Boolean)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
-    #Amount coming out of a transformer
+    #Amount coming out of a transformer. Used to consider transformer production ratio
     M.trouttotals = Var(M.trans, domain = NonNegativeReals)
     
+    #Populates capex costs
     for fac in M.stations:
         M.cape[fac]=fac.capex
-    #Constructs cost vector and carbon constraints. Right now only coming from sources.
-    #may have to add other types later
+    
+    #Constructs cost vector and carbon constraints from sources.
+    #other opex currently not considered, may have to add other types later
     for con in M.connectors:
         added = False
         for fac in M.sources:
@@ -231,13 +234,15 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList,CO2 = 40):
     def sourcecount(model, source):
         return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
     
+    M.sourcesum = Constraint(M.sources, rule = sourcecount)
+    
+    
     def transrule(model, tra):
         return M.trouttotals[tra] == tra.totalEff * sum(M.connections[con] for con in tra.incons)
     
     def transcount(model, tra):
         return M.facilities[tra] ==  sum(M.connections[con] for con in tra.incons)
-    
-    
+     
     def productratiorule(model, con):
         for tra in TransList:
             if con in tra.outcons:
@@ -245,12 +250,20 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList,CO2 = 40):
                 return tra.products[etype] * M.trouttotals[tra] == M.connections[con]
         return Constraint.Skip
 
-
+    M.transconstraint = Constraint(M.trans, rule = transrule)
+    M.transsum = Constraint(M.trans, rule = transcount)
+    M.productconstraint = Constraint(M.connectors, rule = productratiorule)
+    
+    
     def sinkrule(model, sink):
         return sum(M.connections[con] for con in sink.incons) == sink.demand
     
     def sinkcount(model,sink):
         return M.facilities[sink]== sum(M.connections[con] for con in sink.incons)
+    
+    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
+    M.sinksum = Constraint(M.sinks, rule = sinkcount)
+    
     
     def hubrule(model, hub):
         return sum(M.connections[con] for con in hub.incons)==sum(M.connections[con] for con in hub.outcons)
@@ -258,35 +271,23 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList,CO2 = 40):
     def hubcount(model,hub):
         return M.facilities[hub] == sum(M.connections[con] for con in hub.incons)
     
+    M.hubconstraint = Constraint(M.hubs, rule = hubrule)
+    M.hubsum = Constraint(M.hubs, rule = hubcount)
+    
+    #Quadratic constraint that turns isopen on and off
+    def binrule(model, fac):
+        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
+    
+    M.checkopen = Constraint(M.stations, rule = binrule)
+
+
+    M.Co2limit = Constraint(expr = summation(M.connections,M.carbon,index = M.connectors) <= CO2)    
+        
     def objrule(model):
        ob = summation(model.connections,model.c, index=M.connectors) + summation(model.cape, model.isopen, index=M.stations)
        return ob
-
-    def binrule(model, fac):
-        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
-
-    M.sourcesum = Constraint(M.sources, rule = sourcecount)
-
-    M.productconstraint = Constraint(M.connectors, rule = productratiorule)
-    
-    M.transconstraint = Constraint(M.trans, rule = transrule)
-    
-    M.transsum = Constraint(M.trans, rule = transcount)
-    
-    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
-    
-    M.sinksum = Constraint(M.sinks, rule = sinkcount)
-    
-    M.hubconstraint = Constraint(M.hubs, rule = hubrule)
-    
-    M.hubsum = Constraint(M.hubs, rule = hubcount)
-    
-    M.Co2limit = Constraint(expr = summation(M.connections,M.carbon,index = M.connectors) <= CO2)
-    
-    M.checkopen = Constraint(M.stations, rule = binrule)
             
     M.Obj = Objective(rule = objrule, sense = minimize)
-    
             
     return M
 
