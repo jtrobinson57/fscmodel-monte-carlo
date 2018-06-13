@@ -109,7 +109,7 @@ ConnList   = []
 FuelTypeList = []
 DemandTypeList = []
 
-#Import restrictions
+#Import restrictions, just CO2 for now
 CO2Max = RestrIn.loc[0,'CO2 Max']
 
 #Energy sources available from sources
