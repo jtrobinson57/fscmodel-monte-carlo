@@ -82,6 +82,8 @@ class Hub:
         self.energyType = energyType
         self.capex = capex
         self.opex = opex
+        self.incons = []
+        self.outcons = []
     
     def __str__(self):
         return "Hub:" + self.name + ", " + self.energyType
@@ -179,9 +181,16 @@ for fac in TransList:
             fac.incons.append(con)
         elif con.inp==fac.name and con.energyType in fac.products:
             fac.outcons.append(con)
+            
+for fac in HubList:
+    for con in ConnList:
+        if con.out==fac.name and con.energyType==fac.energyType:
+            fac.incons.append(con)
+        elif con.inp==fac.name and con.energyType==fac.energyType:
+            fac.outcons.append(con)
 
 
-def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
+def createModel(SourceList, SinkList, TransList, ConnList, HubList,CO2 = 40):
     M = ConcreteModel()
     
     M.connectors = Set(initialize = ConnList) #Ordered allows you to access by number, not sure if necessary.
@@ -190,14 +199,20 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
     M.sources = Set(initialize = SourceList)
     M.sinks = Set(initialize = SinkList)
     M.trans = Set(initialize = TransList)
+    M.hubs = Set(initialize = HubList)
+    M.stations = Set(initialize = SourceList + SinkList + TransList + HubList)
+    M.cape = Param(M.stations, mutable = True)
     
 #    #For the amount in facilities, for calculating Opex. capex will be added to objective
-#    M.facilities = Var(M.stations, domain = NonNegativeReals)
+    M.facilities = Var( M.stations, domain = NonNegativeReals)
+    M.isopen = Var(M.stations, domain = Boolean)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
     #Amount coming out of a transformer
     M.trouttotals = Var(M.trans, domain = NonNegativeReals)
     
+    for fac in M.stations:
+        M.cape[fac]=fac.capex
     #Constructs cost vector and carbon constraints. Right now only coming from sources.
     #may have to add other types later
     for con in M.connectors:
@@ -211,9 +226,15 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
             M.c[con] = 0
             M.carbon[con] = 0
     
+    def sourcecount(model, source):
+        return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
     
     def transrule(model, tra):
         return M.trouttotals[tra] == tra.totalEff * sum(M.connections[con] for con in tra.incons)
+    
+    def transcount(model, tra):
+        return M.facilities[tra] ==  sum(M.connections[con] for con in tra.incons)
+    
     
     def productratiorule(model, con):
         for tra in TransList:
@@ -224,20 +245,43 @@ def createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40):
 
 
     def sinkrule(model, sink):
-        return sum(M.connections[con] for con in M.connectors and sink.incons) == sink.demand
+        return sum(M.connections[con] for con in sink.incons) == sink.demand
     
+    def sinkcount(model,sink):
+        return M.facilities[sink]== sum(M.connections[con] for con in sink.incons)
+    
+    def hubrule(model, hub):
+        return sum(M.connections[con] for con in hub.incons)==sum(M.connections[con] for con in hub.outcons)
+    
+    def hubcount(model,hub):
+        return M.facilities[hub] == sum(M.connections[con] for con in hub.incons)
     
     def objrule(model):
-       ob = summation(model.connections,model.c, index=M.connectors)
+       ob = summation(model.connections,model.c, index=M.connectors) + summation(model.cape, model.isopen, index=M.stations)
        return ob
+
+    def binrule(model, fac):
+        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
+
+    M.sourcesum = Constraint(M.sources, rule = sourcecount)
 
     M.productconstraint = Constraint(M.connectors, rule = productratiorule)
     
     M.transconstraint = Constraint(M.trans, rule = transrule)
     
+    M.transsum = Constraint(M.trans, rule = transcount)
+    
     M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
     
+    M.sinksum = Constraint(M.sinks, rule = sinkcount)
+    
+    M.hubconstraint = Constraint(M.hubs, rule = hubrule)
+    
+    M.hubsum = Constraint(M.hubs, rule = hubcount)
+    
     M.Co2limit = Constraint(expr = summation(M.connections,M.carbon,index = M.connectors) <= CO2)
+    
+    M.checkopen = Constraint(M.stations, rule = binrule)
             
     M.Obj = Objective(rule = objrule, sense = minimize)
     
@@ -262,7 +306,7 @@ def checkModel(ConnList, entypes):
 
 checkModel(ConnList, EnergyList)
 
-model = createModel(SourceList, SinkList, TransList, ConnList, CO2 = 40)
+model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = 40)
 
 results = opti(model)
 
@@ -276,10 +320,11 @@ for i in range(len(ConnList)):
         if ConnList[i].energyType == FuelTypeList[j]:
             outMJ[j] = outMJ[j] + model.connections[ConnList[i]].value
 
+
 outdf = pd.DataFrame({'Fuel Type' : FuelTypeList,
-                             'MJ by Fuel' : outMJ,
-                             'Total System Cost' : model.Obj()})
-    
+                      'MJ by Fuel' : outMJ,
+                      'Total System Cost' : model.Obj()})
+
 for i in range(1,len(outdf.index)):
     outdf.at[i,'Total System Cost'] = np.nan
 
