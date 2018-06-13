@@ -117,7 +117,7 @@ for i in range(len(SinkIn.index)):
     if not SinkIn.loc[i, 'EnergyType'] in DemandTypeList:
         DemandTypeList.append(SinkIn.loc[i, 'EnergyType'])
 
-EnergyList = FuelTypeList + DemandTypeList
+EnergyList = FuelTypeList + DemandTypeList 
         
 
 for i in range(len(SourceIn.index)):
