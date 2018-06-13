@@ -99,6 +99,7 @@ SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['N
 TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
 HubIn      = pd.read_excel('input.xlsx', 'Hubs', index_col=None, na_values=['NA'])
 ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
+RestrIn      = pd.read_excel('input.xlsx', 'Restrictions', index_col=None, na_values=['NA'])
 
 SourceList = []
 SinkList   = []
@@ -107,6 +108,9 @@ HubList    = []
 ConnList   = []
 FuelTypeList = []
 DemandTypeList = []
+
+#Import restrictions
+CO2Max = RestrIn.loc[0,'CO2 Max']
 
 #Energy sources available from sources
 for i in range(len(SourceIn.index)):
@@ -191,7 +195,7 @@ for i in range(len(HubIn.index)):
     
 
 
-def createModel(SourceList, SinkList, TransList, ConnList, HubList,CO2 = 40):
+def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M = ConcreteModel()
     
     M.connectors = Set(initialize = ConnList)
@@ -309,7 +313,7 @@ def checkModel(ConnList, entypes):
 
 checkModel(ConnList, EnergyList)
 
-model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = 40)
+model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
 
 results = opti(model)
 
