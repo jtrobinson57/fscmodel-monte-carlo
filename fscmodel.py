@@ -276,15 +276,9 @@ for i in range(len(ConnList)):
         if ConnList[i].energyType == FuelTypeList[j]:
             outMJ[j] = outMJ[j] + model.connections[ConnList[i]].value
 
-<<<<<<< HEAD
-outdf = pd.DataFrame({'Fuel Type' : outSources,
-                      'MJ by Fuel' : outMJ,
-                      'Total System Cost' : model.Obj()})
-=======
 outdf = pd.DataFrame({'Fuel Type' : FuelTypeList,
                              'MJ by Fuel' : outMJ,
                              'Total System Cost' : model.Obj()})
->>>>>>> d579214faa5284e8e15b881693537c5b215512bd
     
 for i in range(1,len(outdf.index)):
     outdf.at[i,'Total System Cost'] = np.nan
