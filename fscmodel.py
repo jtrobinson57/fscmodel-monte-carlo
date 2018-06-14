@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jun  7 13:49:17 2018
-
 @author: j.robinson
 """
 
@@ -11,18 +10,17 @@ from pyomo.opt import SolverFactory
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 
 class Source:
-    def __init__(self,name,energyType,capex=0,opex=0,CO2 = 0, minimum = 0, maximum = math.inf):
+    def __init__(self,name,energyType,capex,opex,CO2,minProd,maxProd):
         self.name = name
         self.energyType = energyType
         self.capex = capex
-        self.opex = opex    
+        self.opex = opex
         self.CO2 = CO2
         self.outcons = []
-        self.min = minimum
-        self.max = maximum
+        self.minProd = minProd
+        self.maxProd = maxProd
     
     def __str__(self):
         return "Source:" + self.name + ", " + self.energyType
@@ -49,12 +47,12 @@ class Sink:
             return self.name < other.name
     
 class Transformer:
-    def __init__(self,name,inp,capex=0,opex=0,totalEff=0):
+    def __init__(self,name,capex=0,opex=0,totalEff=0):
         self.name = name
-        self.inp = inp
         self.capex = capex
         self.opex = opex
         self.totalEff = totalEff
+        self.inputs = {}
         self.products = {}
         self.incons = []
         self.outcons = []
@@ -141,7 +139,9 @@ for i in range(len(SourceIn.index)):
                              energyType = SourceIn.loc[i,'EnergyType'],
                              capex=SourceIn.loc[i,'Capex'], 
                              opex = SourceIn.loc[i,'Opex'], 
-                             CO2 = SourceIn.loc[i,'CO2']))
+                             CO2 = SourceIn.loc[i,'CO2'],
+                             minProd = SourceIn.loc[i,'MinProduction'],
+                             maxProd = SourceIn.loc[i, 'MaxProduction']))
     
     for con in ConnList:
         if con.inp==SourceList[i].name and con.energyType==SourceList[i].energyType:
@@ -162,13 +162,23 @@ for i in range(len(SinkIn.index)):
 #Initialize the transfomers
 for i in range(len(TransIn.index)):
     TransList.append(Transformer(name = TransIn.loc[i,'Name'],
-                                 inp = TransIn.loc[i,'Input'],
                                  capex = TransIn.loc[i,'Capex'],
                                  opex = TransIn.loc[i,'Opex'],
                                  totalEff = TransIn.loc[i,'TotalEff']))
     
     k = 0
     x = 0
+    
+    for j in range(len(TransIn.loc[i,'Input0':'Prod0'])-1):
+        x = int(j/2)
+        inp = TransIn.loc[i,'Input'+str(x)]       
+        if k % 2 == 0 and isinstance(inp,str):
+            TransList[i].inputs[inp] = TransIn.loc[i,'InRatio'+str(x)]
+        k = k + 1
+        
+    k = 0
+    x = 0
+    
     for j in range(len(TransIn.loc[i,'Prod0':])):
         product = TransIn.loc[i,'Prod'+str(x)]       
         if k % 2 == 0 and isinstance(product,str):
@@ -177,12 +187,12 @@ for i in range(len(TransIn.index)):
             TransList[i].products[product] = TransIn.loc[i,'SubEff'+str(x)]
             x = x + 1
         k = k + 1
-
-    for con in ConnList:
-        if con.out==TransList[i].name and con.energyType==TransList[i].inp:
-            TransList[i].incons.append(con)
-        elif con.inp==TransList[i].name and con.energyType in TransList[i].products:
-            TransList[i].outcons.append(con)
+ 
+#    for con in ConnList:
+#        if con.out==TransList[i].name and con.energyType==TransList[i].inp:
+#            TransList[i].incons.append(con)
+#        elif con.inp==TransList[i].name and con.energyType in TransList[i].products:
+#            TransList[i].outcons.append(con)
 
  #Initialize the Hubs   
 for i in range(len(HubIn.index)):
@@ -242,11 +252,6 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
         return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
     
     M.sourcesum = Constraint(M.sources, rule = sourcecount)
-    
-    for source in M.sources:
-        M.facilities[source].setub = source.max
-        M.facilities[source].setlb = source.min
-
     
     
     def transrule(model, tra):
