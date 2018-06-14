@@ -220,8 +220,8 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.hubs = Set(initialize = HubList)
     M.stations = Set(initialize = SourceList + SinkList + TransList + HubList)
     
-    M.c = Param(M.connectors, mutable = True)
-    M.carbon = Param(M.connectors, mutable = True)
+    M.c = Param(M.stations, mutable = True)
+    M.carbon = Param(M.sources, mutable = True)
     M.cape = Param(M.stations, mutable = True)
     
     #For the amount in facilities, for calculating Opex. For transformer, the amount coming out
@@ -237,18 +237,12 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     for fac in M.stations:
         M.cape[fac]=fac.capex
     
-    #Constructs cost vector and carbon constraints from sources.
-    #other opex currently not considered, may have to add other types later
-    for con in M.connectors:
-        added = False
-        for fac in M.sources:
-            if con in fac.outcons:
-                M.c[con] = fac.opex
-                M.carbon[con] = fac.CO2 
-                added = True
-        if not added:
-            M.c[con] = 0
-            M.carbon[con] = 0
+    #Constructs cost vector from opex and carbon constraints from sources.
+    for fac in M.stations:
+        M.c[fac] = fac.opex
+        if isinstance(fac, Source):
+            M.carbon[fac] = fac.CO2
+    
     
     def sourcecount(model, source):
         return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
@@ -310,10 +304,10 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.checkopen = Constraint(M.stations, rule = binrule)
 
 
-    M.Co2limit = Constraint(expr = summation(M.connections,M.carbon,index = M.connectors) <= CO2)    
+    M.Co2limit = Constraint(expr = summation(M.facilities,M.carbon,index = M.sources) <= CO2)    
         
     def objrule(model):
-       ob = summation(model.connections,model.c, index=M.connectors) + summation(model.cape, model.isopen, index=M.stations)
+       ob = summation(model.facilities,model.c, index=M.stations) + summation(model.cape, model.isopen, index=M.stations)
        return ob
             
     M.Obj = Objective(rule = objrule, sense = minimize)
