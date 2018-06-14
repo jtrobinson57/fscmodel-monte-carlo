@@ -12,11 +12,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Source:
-    def __init__(self,name,energyType,capex,opex,CO2,minProd,maxProd):
+    def __init__(self,name,energyType,capex,opexMin,opexAvg,opexMax,CO2,minProd,maxProd):
         self.name = name
         self.energyType = energyType
         self.capex = capex
-        self.opex = opex
+        self.opex = 0
+        self.opexMin = opexMin
+        self.opexAvg = opexAvg
+        self.opexMax = opexMax
         self.CO2 = CO2
         self.outcons = []
         self.minProd = minProd
@@ -31,11 +34,14 @@ class Source:
 
 
 class Sink:
-    def __init__(self,name,capex,opex,energyType,demand):
+    def __init__(self,name,capex,opexMin,opexAvg,opexMax,energyType,demand):
         self.name = name
         self.energyType = energyType
         self.capex = capex
-        self.opex = opex
+        self.opex = 0
+        self.opexMin = opexMin
+        self.opexAvg = opexAvg
+        self.opexMax = opexMax
         self.demand = demand
         self.incons = []
         
@@ -47,11 +53,17 @@ class Sink:
             return self.name < other.name
     
 class Transformer:
-    def __init__(self,name,capex=0,opex=0,totalEff=0):
+    def __init__(self,name,capex,opexMin,opexAvg,opexMax,totalEffMin,totalEffAvg,totalEffMax):
         self.name = name
         self.capex = capex
-        self.opex = opex
-        self.totalEff = totalEff
+        self.opex = 0
+        self.opexMin = opexMin
+        self.opexAvg = opexAvg
+        self.opexMax = opexMax
+        self.totalEff = 0
+        self.totalEffMin = totalEffMin
+        self.totalEffAvg = totalEffAvg
+        self.totalEffMax = totalEffMax
         self.inputs = {}
         self.products = {}
         self.incons = []
@@ -65,11 +77,14 @@ class Transformer:
             return self.name < other.name
         
 class Hub:
-    def __init__(self,name,energyType,capex=0,opex=0):
+    def __init__(self,name,energyType,capex,opexMin,opexAvg,opexMax):
         self.name = name
         self.energyType = energyType
         self.capex = capex
-        self.opex = opex
+        self.opex = 0
+        self.opexMin = opexMin
+        self.opexAvg = opexAvg
+        self.opexMax = opexMax
         self.incons = []
         self.outcons = []
     
@@ -92,123 +107,6 @@ class Connection:
             return self.name < other.name
     def __str__(self):
         return "Connection:" + self.name + ", " + self.energyType
-
-
-
-SourceIn    = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
-SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['NA'])
-TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
-HubIn      = pd.read_excel('input.xlsx', 'Hubs', index_col=None, na_values=['NA'])
-ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
-RestrIn      = pd.read_excel('input.xlsx', 'Restrictions', index_col=None, na_values=['NA'])
-
-SourceList = []
-SinkList   = []
-TransList  = []
-HubList    = []
-ConnList   = []
-FuelTypeList = []
-DemandTypeList = []
-
-#Import restrictions, just CO2 for now
-CO2Max = RestrIn.loc[0,'CO2 Max']
-
-#Energy sources available from sources
-for i in range(len(SourceIn.index)):
-    if not SourceIn.loc[i,'EnergyType'] in FuelTypeList:
-        FuelTypeList.append(SourceIn.loc[i,'EnergyType'])
-        
-#Energy types demanded at sinks     
-for i in range(len(SinkIn.index)):
-    if not SinkIn.loc[i, 'EnergyType'] in DemandTypeList:
-        DemandTypeList.append(SinkIn.loc[i, 'EnergyType'])
-
-#All energy types 
-EnergyList = FuelTypeList + DemandTypeList
-
-#Initialize the connectors        
-for i in range(len(ConnIn.index)):
-    ConnList.append(Connection(name = ConnIn.loc[i,'Name'],
-                              inp = ConnIn.loc[i,'In'],
-                              out = ConnIn.loc[i,'Out'],
-                              energyType = ConnIn.loc[i,'EnergyType']))
-
-#Initialize the Sources
-for i in range(len(SourceIn.index)):
-    SourceList.append(Source(name = SourceIn.loc[i,'Name'],
-                             energyType = SourceIn.loc[i,'EnergyType'],
-                             capex=SourceIn.loc[i,'Capex'], 
-                             opex = SourceIn.loc[i,'Opex'], 
-                             CO2 = SourceIn.loc[i,'CO2'],
-                             minProd = SourceIn.loc[i,'MinProduction'],
-                             maxProd = SourceIn.loc[i, 'MaxProduction']))
-    
-    for con in ConnList:
-        if con.inp==SourceList[i].name and con.energyType==SourceList[i].energyType:
-            SourceList[i].outcons.append(con)
-
-#Initialize the sinks
-for i in range(len(SinkIn.index)):
-    SinkList.append(Sink(name = SinkIn.loc[i,'Name'],
-                         energyType = SinkIn.loc[i,'EnergyType'],
-                         capex = SinkIn.loc[i,'Capex'],
-                         opex = SinkIn.loc[i,'Opex'],
-                         demand = SinkIn.loc[i,'Demand']))
-    
-    for con in ConnList:
-        if con.out==SinkList[i].name and con.energyType==SinkList[i].energyType:
-            SinkList[i].incons.append(con)
-
-#Initialize the transfomers
-for i in range(len(TransIn.index)):
-    TransList.append(Transformer(name = TransIn.loc[i,'Name'],
-                                 capex = TransIn.loc[i,'Capex'],
-                                 opex = TransIn.loc[i,'Opex'],
-                                 totalEff = TransIn.loc[i,'TotalEff']))
-    
-    k = 0
-    x = 0
-    
-    for j in range(len(TransIn.loc[i,'Input0':'Prod0'])-1):
-        x = int(j/2)
-        inp = TransIn.loc[i,'Input'+str(x)]       
-        if k % 2 == 0 and isinstance(inp,str):
-            if not inp in EnergyList:
-                EnergyList.append(inp)
-            TransList[i].inputs[inp] = TransIn.loc[i,'InRatio'+str(x)]
-        k = k + 1
-        
-    k = 0
-    x = 0
-    
-    for j in range(len(TransIn.loc[i,'Prod0':])):
-        product = TransIn.loc[i,'Prod'+str(x)]       
-        if k % 2 == 0 and isinstance(product,str):
-            if not product in EnergyList:
-                EnergyList.append(product)
-            TransList[i].products[product] = TransIn.loc[i,'SubEff'+str(x)]
-            x = x + 1
-        k = k + 1
- 
-    for con in ConnList:
-        if con.out==TransList[i].name and con.energyType in TransList[i].inputs:
-            TransList[i].incons.append(con)
-        elif con.inp==TransList[i].name and con.energyType in TransList[i].products:
-            TransList[i].outcons.append(con)
-
- #Initialize the Hubs   
-for i in range(len(HubIn.index)):
-    HubList.append(Hub(name = HubIn.loc[i,'Name'],
-                       energyType = HubIn.loc[i,'EnergyType'],
-                       capex = HubIn.loc[i,'Capex'],
-                       opex = HubIn.loc[i,'Opex']))
-    for con in ConnList:
-        if con.out==HubList[i].name and con.energyType==HubList[i].energyType:
-            HubList[i].incons.append(con)
-        elif con.inp==HubList[i].name and con.energyType==HubList[i].energyType:
-            HubList[i].outcons.append(con)
-    
-
 
 def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M = ConcreteModel()
@@ -330,6 +228,137 @@ def checkModel(ConnList, entypes):
     #What more can be added?
     return None
 
+
+
+#int main
+
+
+
+SourceIn    = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
+SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['NA'])
+TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
+HubIn      = pd.read_excel('input.xlsx', 'Hubs', index_col=None, na_values=['NA'])
+ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
+RestrIn      = pd.read_excel('input.xlsx', 'Restrictions', index_col=None, na_values=['NA'])
+
+SourceList = []
+SinkList   = []
+TransList  = []
+HubList    = []
+ConnList   = []
+FuelTypeList = []
+DemandTypeList = []
+
+#Import restrictions, just CO2 for now
+CO2Max = RestrIn.loc[0,'CO2 Max']
+
+#Energy sources available from sources
+for i in range(len(SourceIn.index)):
+    if not SourceIn.loc[i,'EnergyType'] in FuelTypeList:
+        FuelTypeList.append(SourceIn.loc[i,'EnergyType'])
+        
+#Energy types demanded at sinks     
+for i in range(len(SinkIn.index)):
+    if not SinkIn.loc[i, 'EnergyType'] in DemandTypeList:
+        DemandTypeList.append(SinkIn.loc[i, 'EnergyType'])
+
+#All energy types 
+EnergyList = FuelTypeList + DemandTypeList
+
+#Initialize the connectors        
+for i in range(len(ConnIn.index)):
+    ConnList.append(Connection(name = ConnIn.loc[i,'Name'],
+                              inp = ConnIn.loc[i,'In'],
+                              out = ConnIn.loc[i,'Out'],
+                              energyType = ConnIn.loc[i,'EnergyType']))
+
+#Initialize the Sources
+for i in range(len(SourceIn.index)):
+    SourceList.append(Source(name = SourceIn.loc[i,'Name'],
+                             energyType = SourceIn.loc[i,'EnergyType'],
+                             capex = SourceIn.loc[i,'Capex'], 
+                             opexMin = SourceIn.loc[i,'OpexMin'],
+                             opexAvg = SourceIn.loc[i,'OpexAvg'],
+                             opexMax = SourceIn.loc[i,'OpexMax'],
+                             CO2 = SourceIn.loc[i,'CO2'],
+                             minProd = SourceIn.loc[i,'MinProduction'],
+                             maxProd = SourceIn.loc[i, 'MaxProduction']))
+    
+    for con in ConnList:
+        if con.inp==SourceList[i].name and con.energyType==SourceList[i].energyType:
+            SourceList[i].outcons.append(con)
+
+#Initialize the sinks
+for i in range(len(SinkIn.index)):
+    SinkList.append(Sink(name = SinkIn.loc[i,'Name'],
+                         energyType = SinkIn.loc[i,'EnergyType'],
+                         capex = SinkIn.loc[i,'Capex'],
+                         opexMin = SinkIn.loc[i,'OpexMin'],
+                         opexAvg = SinkIn.loc[i,'OpexAvg'],
+                         opexMax = SinkIn.loc[i,'OpexMax'],
+                         demand = SinkIn.loc[i,'Demand']))
+    
+    for con in ConnList:
+        if con.out==SinkList[i].name and con.energyType==SinkList[i].energyType:
+            SinkList[i].incons.append(con)
+
+#Initialize the transfomers
+for i in range(len(TransIn.index)):
+    TransList.append(Transformer(name = TransIn.loc[i,'Name'],
+                                 capex = TransIn.loc[i,'Capex'],
+                                 opexMin = TransIn.loc[i,'OpexMin'],
+                                 opexAvg = TransIn.loc[i,'OpexAvg'],
+                                 opexMax = TransIn.loc[i,'OpexMax'],
+                                 totalEffMin = TransIn.loc[i,'TotalEffMin'],
+                                 totalEffAvg = TransIn.loc[i,'TotalEffAvg'],
+                                 totalEffMax = TransIn.loc[i,'TotalEffMax']))
+    
+    k = 0
+    x = 0
+    
+    for j in range(len(TransIn.loc[i,'Input0':'Prod0'])-1):
+        x = int(j/2)
+        inp = TransIn.loc[i,'Input'+str(x)]       
+        if k % 2 == 0 and isinstance(inp,str):
+            if not inp in EnergyList:
+                EnergyList.append(inp)
+            TransList[i].inputs[inp] = TransIn.loc[i,'InRatio'+str(x)]
+        k = k + 1
+        
+    k = 0
+    x = 0
+    
+    for j in range(len(TransIn.loc[i,'Prod0':])):
+        product = TransIn.loc[i,'Prod'+str(x)]       
+        if k % 2 == 0 and isinstance(product,str):
+            if not product in EnergyList:
+                EnergyList.append(product)
+            TransList[i].products[product] = TransIn.loc[i,'SubEff'+str(x)]
+            x = x + 1
+        k = k + 1
+ 
+    for con in ConnList:
+        if con.out==TransList[i].name and con.energyType in TransList[i].inputs:
+            TransList[i].incons.append(con)
+        elif con.inp==TransList[i].name and con.energyType in TransList[i].products:
+            TransList[i].outcons.append(con)
+
+ #Initialize the Hubs   
+for i in range(len(HubIn.index)):
+    HubList.append(Hub(name = HubIn.loc[i,'Name'],
+                       energyType = HubIn.loc[i,'EnergyType'],
+                       capex = HubIn.loc[i,'Capex'],
+                       opexMin = HubIn.loc[i,'OpexMin'],
+                       opexAvg = HubIn.loc[i,'OpexAvg'],
+                       opexMax = HubIn.loc[i,'OpexMax']))
+    
+    for con in ConnList:
+        if con.out==HubList[i].name and con.energyType==HubList[i].energyType:
+            HubList[i].incons.append(con)
+        elif con.inp==HubList[i].name and con.energyType==HubList[i].energyType:
+            HubList[i].outcons.append(con)
+    
+
 checkModel(ConnList, EnergyList)
 
 model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
@@ -355,3 +384,7 @@ for i in range(1,len(outdf.index)):
     outdf.at[i,'Total System Cost'] = np.nan
 
 outdf.to_excel('output.xlsx', sheet_name='Sheet1')
+
+
+
+#return 0
