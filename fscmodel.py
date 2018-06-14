@@ -173,6 +173,8 @@ for i in range(len(TransIn.index)):
         x = int(j/2)
         inp = TransIn.loc[i,'Input'+str(x)]       
         if k % 2 == 0 and isinstance(inp,str):
+            if not inp in EnergyList:
+                EnergyList.append(inp)
             TransList[i].inputs[inp] = TransIn.loc[i,'InRatio'+str(x)]
         k = k + 1
         
@@ -188,11 +190,11 @@ for i in range(len(TransIn.index)):
             x = x + 1
         k = k + 1
  
-#    for con in ConnList:
-#        if con.out==TransList[i].name and con.energyType==TransList[i].inp:
-#            TransList[i].incons.append(con)
-#        elif con.inp==TransList[i].name and con.energyType in TransList[i].products:
-#            TransList[i].outcons.append(con)
+    for con in ConnList:
+        if con.out==TransList[i].name and con.energyType in TransList[i].inputs:
+            TransList[i].incons.append(con)
+        elif con.inp==TransList[i].name and con.energyType in TransList[i].products:
+            TransList[i].outcons.append(con)
 
  #Initialize the Hubs   
 for i in range(len(HubIn.index)):
@@ -253,6 +255,9 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     
     M.sourcesum = Constraint(M.sources, rule = sourcecount)
     
+    for source in M.sources:
+        M.facilities[source].setub(source.maxProd)
+        M.facilities[source].setlb(source.minProd)
     
     def transrule(model, tra):
         return M.trouttotals[tra] == tra.totalEff * sum(M.connections[con] for con in tra.incons)
