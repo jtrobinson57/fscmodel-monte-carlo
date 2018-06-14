@@ -11,15 +11,18 @@ from pyomo.opt import SolverFactory
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 class Source:
-    def __init__(self,name,energyType,capex=0,opex=0,CO2 = 0):
+    def __init__(self,name,energyType,capex=0,opex=0,CO2 = 0, minimum = 0, maximum = math.inf):
         self.name = name
         self.energyType = energyType
         self.capex = capex
-        self.opex = opex
+        self.opex = opex    
         self.CO2 = CO2
         self.outcons = []
+        self.min = minimum
+        self.max = maximum
     
     def __str__(self):
         return "Source:" + self.name + ", " + self.energyType
@@ -239,6 +242,11 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
         return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
     
     M.sourcesum = Constraint(M.sources, rule = sourcecount)
+    
+    for source in M.sources:
+        M.facilities[source].setub = source.max
+        M.facilities[source].setlb = source.min
+
     
     
     def transrule(model, tra):
