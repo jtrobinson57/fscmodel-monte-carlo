@@ -374,9 +374,8 @@ for i in range(len(HubIn.index)):
     
 numIter = RestrIn.loc[0,'NumIterations']
 objList = np.zeros(numIter)
-fuelQuantity = (len(FuelTypeList),numIter)
-np.zeros(fuelQuantity)
-            
+fuelQuantity = np.zeros((numIter,len(FuelTypeList)))
+
 checkModel(ConnList, EnergyList)
 
 for i in range(numIter):
@@ -401,10 +400,8 @@ for i in range(numIter):
             if ConnList[j].energyType == FuelTypeList[k]:
                 fuelQuantity[i,k] = fuelQuantity[i,k] + model.connections[ConnList[k]].value
        
-outdf = pd.DataFrame({})
-    
-for i in range(1,len(outdf.index)):
-    outdf.at[i,'Total System Cost'] = np.nan
+outdf = pd.DataFrame({'Total System Cost' : objList
+                      })
     
 outdf.to_excel('output.xlsx', sheet_name='Sheet1')
 
