@@ -228,7 +228,21 @@ def checkModel(ConnList, entypes):
     #What more can be added?
     return None
 
+def randomizeOpex(List):
+    
+    for i in List:
+        while True:
+            i.opex = np.random.normal(i.opexAvg,((i.opexMax-i.opexMin)/6))
+            if i.opex >= i.opexMin and i.opex <= i.opexMax:
+                break
 
+def randomizeEff(List):
+    
+    for i in List:
+        while True:
+            i.totalEff = np.random.normal(i.totalEffAvg,((i.totalEffMax-i.totalEffMin)/6))
+            if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
+                break
 
 #int main
 
@@ -358,33 +372,41 @@ for i in range(len(HubIn.index)):
         elif con.inp==HubList[i].name and con.energyType==HubList[i].energyType:
             HubList[i].outcons.append(con)
     
-
+numIter = RestrIn.loc[0,'NumIterations']
+objList = np.zeros(numIter)
+fuelQuantity = (len(FuelTypeList),numIter)
+np.zeros(fuelQuantity)
+            
 checkModel(ConnList, EnergyList)
 
-model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
+for i in range(numIter):
+    
+    randomizeOpex(SourceList)
+    randomizeOpex(SinkList)
+    randomizeOpex(TransList)
+    randomizeOpex(HubList)
+    
+    randomizeEff(TransList)
+    
+    model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
+    
+    results = opti(model)
+    
+    #Output formatting starts here
 
-results = opti(model)
-
-
-#Output formatting starts here
-
-outMJ = [0] * len(FuelTypeList)
-
-for i in range(len(ConnList)):
-    for j in range(len(FuelTypeList)):
-        if ConnList[i].energyType == FuelTypeList[j]:
-            outMJ[j] = outMJ[j] + model.connections[ConnList[i]].value
-
-
-outdf = pd.DataFrame({'Fuel Type' : FuelTypeList,
-                      'MJ by Fuel' : outMJ,
-                      'Total System Cost' : model.Obj()})
-
+    objList[i] = model.Obj()
+    
+    for j in range(len(ConnList)):
+        for k in range(len(FuelTypeList)):
+            if ConnList[j].energyType == FuelTypeList[k]:
+                fuelQuantity[i,k] = fuelQuantity[i,k] + model.connections[ConnList[k]].value
+       
+outdf = pd.DataFrame({})
+    
 for i in range(1,len(outdf.index)):
     outdf.at[i,'Total System Cost'] = np.nan
-
+    
 outdf.to_excel('output.xlsx', sheet_name='Sheet1')
-
 
 
 #return 0
