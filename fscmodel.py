@@ -34,7 +34,7 @@ class Source:
 
 
 class Sink:
-    def __init__(self,name,capex,opexMin,opexAvg,opexMax,energyType,demand):
+    def __init__(self,name,capex,opexMin,opexAvg,opexMax,energyType,demandMin,demandAvg,demandMax):
         self.name = name
         self.energyType = energyType
         self.capex = capex
@@ -42,7 +42,10 @@ class Sink:
         self.opexMin = opexMin
         self.opexAvg = opexAvg
         self.opexMax = opexMax
-        self.demand = demand
+        self.demand = 0
+        self.demandMin = demandMin
+        self.demandAvg = demandAvg
+        self.demandMax = demandMax
         self.incons = []
         
     def __str__(self):
@@ -245,8 +248,17 @@ def randomizeEff(List,row,dataout):
                 break
         dataout.at[row,i.name+'TotalEff'] = i.totalEff
 
+def randomizeDem(List,row,dataout):
+    
+    for i in List:
+        while True:
+            i.demand = np.random.normal(i.demandAvg,((i.demandMax-i.demandMin)/6))
+            if i.demand >= i.demandMin and i.demand <= i.demandMax:
+                break
+        dataout.at[row,i.name+'Demand'] = i.demand
+        
+        
 #int main
-
 
 
 SourceIn    = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
@@ -317,7 +329,9 @@ for i in range(len(SinkIn.index)):
                          opexMin = SinkIn.loc[i,'OpexMin'],
                          opexAvg = SinkIn.loc[i,'OpexAvg'],
                          opexMax = SinkIn.loc[i,'OpexMax'],
-                         demand = SinkIn.loc[i,'Demand']))
+                         demandMin = SinkIn.loc[i,'DemandMin'],
+                         demandAvg = SinkIn.loc[i,'DemandAvg'],
+                         demandMax = SinkIn.loc[i,'DemandMax']))
     
     outcolumns.append(SinkList[i].name + 'opex')
     
@@ -405,6 +419,8 @@ for i in range(numIter):
     
     randomizeEff(TransList,i,dataout)
     
+    randomizeDem(SinkList,i,dataout)
+    
     model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
     
     results = opti(model)
@@ -418,7 +434,6 @@ for i in range(numIter):
         dataout.at[i,source.energyType] = model.facilities[source].value
     
 dataout.to_excel('output.xlsx', sheet_name='Sheet1')
-
 
 
 #return 0
