@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Source:
-    def __init__(self,name,energyType,capex,opexMin,opexAvg,opexMax,CO2,minProd,maxProd):
+    def __init__(self, name, energyType, capex, opexMin, opexAvg, opexMax, CO2, isSet, usageMin, usageAvg, usageMax):
         self.name = name
         self.energyType = energyType
         self.capex = capex
@@ -21,9 +21,12 @@ class Source:
         self.opexAvg = opexAvg
         self.opexMax = opexMax
         self.CO2 = CO2
+        self.isSet = isSet
+        self.usage = 0
+        self.usageMin = usageMin
+        self.usageAvg = usageAvg
+        self.usageMax = usageMax
         self.outcons = []
-        self.minProd = minProd
-        self.maxProd = maxProd
     
     def __str__(self):
         return "Source:" + self.name + ", " + self.energyType
@@ -134,6 +137,8 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     #Amount coming into a transformer. Used to consider transformer production ratio
     M.trintotals = Var(M.trans, domain = NonNegativeReals)
     
+    M.carbonsum = Var(domain = NonNegativeReals)
+    
     #Populates capex costs
     for fac in M.stations:
         M.cape[fac] = fac.capex
@@ -151,8 +156,10 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.sourcesum = Constraint(M.sources, rule = sourcecount)
     
     for source in M.sources:
-        M.facilities[source].setub(source.maxProd)
-        M.facilities[source].setlb(source.minProd)
+        if source.isSet:
+            M.facilities[source].setub(source.usage)
+            M.facilities[source].setlb(source.usage)
+
     
     def transrule(model, tra):
         return M.facilities[tra] == tra.totalEff * M.trintotals[tra]
@@ -203,9 +210,11 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
         return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
     
     M.checkopen = Constraint(M.stations, rule = binrule)
+    
+    M.carbonset = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) == M.carbonsum)
 
 
-    M.Co2limit = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) <= CO2)    
+    M.Co2limit = Constraint(expr = M.carbonsum <= CO2)    
         
     def objrule(model):
        ob = summation(model.facilities, model.c, index = M.stations) + summation(model.cape, model.isopen, index = M.stations)
@@ -256,7 +265,18 @@ def randomizeDem(List, row, dataout):
             if i.demand >= i.demandMin and i.demand <= i.demandMax:
                 break
         dataout.at[row, i.name+'Demand'] = i.demand
-        
+
+def randomizeUsage(List, row, dataout):
+    for i in List:
+        if i.isSet:
+            dataout.at[row, i.energyType + 'isFixed'] = i.isSet
+            while True:
+                i.usage = np.random.normal(i.usageAvg, ((i.usageMax - i.usageMin)/6)) 
+                if i.usage >= i.usageMin and i.usage <= i.usageMax:
+                    break
+
+
+
         
 #int main
 
@@ -275,7 +295,7 @@ HubList    = []
 ConnList   = []
 FuelTypeList = []
 DemandTypeList = []
-outcolumns = ['Total Cost']
+outcolumns = ['Total Cost', 'CO2']
 
 #Import restrictions, just CO2 for now
 CO2Max = RestrIn.loc[0, 'CO2 Max']
@@ -285,6 +305,7 @@ for i in range(len(SourceIn.index)):
     if not SourceIn.loc[i, 'EnergyType'] in FuelTypeList:
         FuelTypeList.append(SourceIn.loc[i, 'EnergyType'])
         outcolumns.append(SourceIn.loc[i, 'EnergyType'])
+        outcolumns.append(SourceIn.loc[i, 'EnergyType'] + 'isFixed')
         
 #Energy types demanded at sinks     
 for i in range(len(SinkIn.index)):
@@ -312,10 +333,13 @@ for i in range(len(SourceIn.index)):
                              opexAvg = SourceIn.loc[i, 'OpexAvg'],
                              opexMax = SourceIn.loc[i, 'OpexMax'],
                              CO2 = SourceIn.loc[i, 'CO2'],
-                             minProd = SourceIn.loc[i, 'MinProduction'],
-                             maxProd = SourceIn.loc[i, 'MaxProduction']))
+                             isSet = SourceIn.loc[i, 'IsSet'],
+                             usageMin = SourceIn.loc[i, 'UsageMin'],
+                             usageAvg = SourceIn.loc[i, 'UsageAvg'],
+                             usageMax = SourceIn.loc[i, 'UsageMax']))
     
     outcolumns.append(SourceList[i].name + 'opex')
+
     
     for con in ConnList:
         if con.inp==SourceList[i].name and con.energyType==SourceList[i].energyType:
@@ -422,6 +446,8 @@ for i in range(numIter):
     
     randomizeDem(SinkList, i, dataout)
     
+    randomizeUsage(SourceList, i, dataout)
+    
     model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
     
     results = opti(model)
@@ -430,6 +456,7 @@ for i in range(numIter):
 
     dataout.at[i, 'Total Cost'] = model.Obj()
     
+    dataout.at[i, 'CO2'] = model.carbonsum.value
     
     for source in SourceList:
         dataout.at[i, source.energyType] = model.facilities[source].value
