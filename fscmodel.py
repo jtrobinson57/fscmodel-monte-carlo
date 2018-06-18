@@ -334,6 +334,7 @@ for i in range(len(SinkIn.index)):
                          demandMax = SinkIn.loc[i,'DemandMax']))
     
     outcolumns.append(SinkList[i].name + 'opex')
+    outcolumns.append(SinkList[i].name + 'Demand')
     
     for con in ConnList:
         if con.out==SinkList[i].name and con.energyType==SinkList[i].energyType:
