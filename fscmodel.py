@@ -126,7 +126,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.cape = Param(M.stations, mutable = True)
     
     #For the amount in facilities, for calculating Opex. For transformer, the amount coming out
-    M.facilities = Var( M.stations, domain = NonNegativeReals)
+    M.facilities = Var(M.stations, domain = NonNegativeReals)
     #Whether a facility is being used. For calculating Capex
     M.isopen = Var(M.stations, domain = Boolean)
     #Amount going through connectors
@@ -136,7 +136,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     
     #Populates capex costs
     for fac in M.stations:
-        M.cape[fac]=fac.capex
+        M.cape[fac] = fac.capex
     
     #Constructs cost vector from opex and carbon constraints from sources.
     for fac in M.stations:
@@ -205,10 +205,10 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.checkopen = Constraint(M.stations, rule = binrule)
 
 
-    M.Co2limit = Constraint(expr = summation(M.facilities,M.carbon,index = M.sources) <= CO2)    
+    M.Co2limit = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) <= CO2)    
         
     def objrule(model):
-       ob = summation(model.facilities,model.c, index=M.stations) + summation(model.cape, model.isopen, index=M.stations)
+       ob = summation(model.facilities, model.c, index = M.stations) + summation(model.cape, model.isopen, index = M.stations)
        return ob
             
     M.Obj = Objective(rule = objrule, sense = minimize)
@@ -230,43 +230,43 @@ def checkModel(ConnList, entypes):
     #What more can be added?
     return None
 
-def randomizeOpex(List,row,dataout):
+def randomizeOpex(List, row, dataout):
     
     for i in List:
         while True:
-            i.opex = np.random.normal(i.opexAvg,((i.opexMax-i.opexMin)/6))
+            i.opex = np.random.normal(i.opexAvg,((i.opexMax - i.opexMin)/6))
             if i.opex >= i.opexMin and i.opex <= i.opexMax:
                 break
-        dataout.at[row,i.name+'opex'] = i.opex
+        dataout.at[row, i.name + 'opex'] = i.opex
 
-def randomizeEff(List,row,dataout):
+def randomizeEff(List, row, dataout):
     
     for i in List:
         while True:
-            i.totalEff = np.random.normal(i.totalEffAvg,((i.totalEffMax-i.totalEffMin)/6))
+            i.totalEff = np.random.normal(i.totalEffAvg, ((i.totalEffMax - i.totalEffMin)/6))
             if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
                 break
-        dataout.at[row,i.name+'TotalEff'] = i.totalEff
+        dataout.at[row, i.name + 'TotalEff'] = i.totalEff
 
-def randomizeDem(List,row,dataout):
+def randomizeDem(List, row, dataout):
     
     for i in List:
         while True:
-            i.demand = np.random.normal(i.demandAvg,((i.demandMax-i.demandMin)/6))
+            i.demand = np.random.normal(i.demandAvg, ((i.demandMax - i.demandMin)/6))
             if i.demand >= i.demandMin and i.demand <= i.demandMax:
                 break
-        dataout.at[row,i.name+'Demand'] = i.demand
+        dataout.at[row, i.name+'Demand'] = i.demand
         
         
 #int main
 
 
-SourceIn    = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
-SinkIn      = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['NA'])
-TransIn     = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
-HubIn      = pd.read_excel('input.xlsx', 'Hubs', index_col=None, na_values=['NA'])
-ConnIn      = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
-RestrIn      = pd.read_excel('input.xlsx', 'Restrictions', index_col=None, na_values=['NA'])
+SourceIn  = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
+SinkIn    = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['NA'])
+TransIn   = pd.read_excel('input.xlsx', 'Transformers', index_col=None, na_values=['NA'])
+HubIn     = pd.read_excel('input.xlsx', 'Hubs', index_col=None, na_values=['NA'])
+ConnIn    = pd.read_excel('input.xlsx', 'Connectors', index_col=None, na_values=['NA'])
+RestrIn   = pd.read_excel('input.xlsx', 'Restrictions', index_col=None, na_values=['NA'])
 
 SourceList = []
 SinkList   = []
@@ -278,13 +278,13 @@ DemandTypeList = []
 outcolumns = ['Total Cost']
 
 #Import restrictions, just CO2 for now
-CO2Max = RestrIn.loc[0,'CO2 Max']
+CO2Max = RestrIn.loc[0, 'CO2 Max']
 
 #Energy sources available from sources
 for i in range(len(SourceIn.index)):
-    if not SourceIn.loc[i,'EnergyType'] in FuelTypeList:
-        FuelTypeList.append(SourceIn.loc[i,'EnergyType'])
-        outcolumns.append(SourceIn.loc[i,'EnergyType'])
+    if not SourceIn.loc[i, 'EnergyType'] in FuelTypeList:
+        FuelTypeList.append(SourceIn.loc[i, 'EnergyType'])
+        outcolumns.append(SourceIn.loc[i, 'EnergyType'])
         
 #Energy types demanded at sinks     
 for i in range(len(SinkIn.index)):
@@ -298,21 +298,21 @@ EnergyList = FuelTypeList + DemandTypeList
 
 #Initialize the connectors        
 for i in range(len(ConnIn.index)):
-    ConnList.append(Connection(name = ConnIn.loc[i,'Name'],
-                              inp = ConnIn.loc[i,'In'],
-                              out = ConnIn.loc[i,'Out'],
-                              energyType = ConnIn.loc[i,'EnergyType']))
+    ConnList.append(Connection(name = ConnIn.loc[i, 'Name'],
+                              inp = ConnIn.loc[i, 'In'],
+                              out = ConnIn.loc[i, 'Out'],
+                              energyType = ConnIn.loc[i, 'EnergyType']))
 
 #Initialize the Sources
 for i in range(len(SourceIn.index)):
-    SourceList.append(Source(name = SourceIn.loc[i,'Name'],
-                             energyType = SourceIn.loc[i,'EnergyType'],
-                             capex = SourceIn.loc[i,'Capex'], 
-                             opexMin = SourceIn.loc[i,'OpexMin'],
-                             opexAvg = SourceIn.loc[i,'OpexAvg'],
-                             opexMax = SourceIn.loc[i,'OpexMax'],
-                             CO2 = SourceIn.loc[i,'CO2'],
-                             minProd = SourceIn.loc[i,'MinProduction'],
+    SourceList.append(Source(name = SourceIn.loc[i, 'Name'],
+                             energyType = SourceIn.loc[i, 'EnergyType'],
+                             capex = SourceIn.loc[i, 'Capex'], 
+                             opexMin = SourceIn.loc[i, 'OpexMin'],
+                             opexAvg = SourceIn.loc[i, 'OpexAvg'],
+                             opexMax = SourceIn.loc[i, 'OpexMax'],
+                             CO2 = SourceIn.loc[i, 'CO2'],
+                             minProd = SourceIn.loc[i, 'MinProduction'],
                              maxProd = SourceIn.loc[i, 'MaxProduction']))
     
     outcolumns.append(SourceList[i].name + 'opex')
@@ -323,15 +323,15 @@ for i in range(len(SourceIn.index)):
 
 #Initialize the sinks
 for i in range(len(SinkIn.index)):
-    SinkList.append(Sink(name = SinkIn.loc[i,'Name'],
-                         energyType = SinkIn.loc[i,'EnergyType'],
-                         capex = SinkIn.loc[i,'Capex'],
-                         opexMin = SinkIn.loc[i,'OpexMin'],
-                         opexAvg = SinkIn.loc[i,'OpexAvg'],
-                         opexMax = SinkIn.loc[i,'OpexMax'],
-                         demandMin = SinkIn.loc[i,'DemandMin'],
-                         demandAvg = SinkIn.loc[i,'DemandAvg'],
-                         demandMax = SinkIn.loc[i,'DemandMax']))
+    SinkList.append(Sink(name = SinkIn.loc[i, 'Name'],
+                         energyType = SinkIn.loc[i, 'EnergyType'],
+                         capex = SinkIn.loc[i, 'Capex'],
+                         opexMin = SinkIn.loc[i, 'OpexMin'],
+                         opexAvg = SinkIn.loc[i, 'OpexAvg'],
+                         opexMax = SinkIn.loc[i, 'OpexMax'],
+                         demandMin = SinkIn.loc[i, 'DemandMin'],
+                         demandAvg = SinkIn.loc[i, 'DemandAvg'],
+                         demandMax = SinkIn.loc[i, 'DemandMax']))
     
     outcolumns.append(SinkList[i].name + 'opex')
     outcolumns.append(SinkList[i].name + 'Demand')
@@ -342,38 +342,38 @@ for i in range(len(SinkIn.index)):
 
 #Initialize the transfomers
 for i in range(len(TransIn.index)):
-    TransList.append(Transformer(name = TransIn.loc[i,'Name'],
-                                 capex = TransIn.loc[i,'Capex'],
-                                 opexMin = TransIn.loc[i,'OpexMin'],
-                                 opexAvg = TransIn.loc[i,'OpexAvg'],
-                                 opexMax = TransIn.loc[i,'OpexMax'],
-                                 totalEffMin = TransIn.loc[i,'TotalEffMin'],
-                                 totalEffAvg = TransIn.loc[i,'TotalEffAvg'],
-                                 totalEffMax = TransIn.loc[i,'TotalEffMax']))
+    TransList.append(Transformer(name = TransIn.loc[i, 'Name'],
+                                 capex = TransIn.loc[i, 'Capex'],
+                                 opexMin = TransIn.loc[i, 'OpexMin'],
+                                 opexAvg = TransIn.loc[i, 'OpexAvg'],
+                                 opexMax = TransIn.loc[i, 'OpexMax'],
+                                 totalEffMin = TransIn.loc[i, 'TotalEffMin'],
+                                 totalEffAvg = TransIn.loc[i, 'TotalEffAvg'],
+                                 totalEffMax = TransIn.loc[i, 'TotalEffMax']))
     outcolumns.append(TransList[i].name + 'opex')
     outcolumns.append(TransList[i].name + 'TotalEff')
     
     k = 0
     x = 0
     
-    for j in range(len(TransIn.loc[i,'Input0':'Prod0'])-1):
+    for j in range(len(TransIn.loc[i, 'Input0':'Prod0'])-1):
         x = int(j/2)
-        inp = TransIn.loc[i,'Input'+str(x)]       
+        inp = TransIn.loc[i, 'Input'+str(x)]       
         if k % 2 == 0 and isinstance(inp,str):
             if not inp in EnergyList:
                 EnergyList.append(inp)
-            TransList[i].inputs[inp] = TransIn.loc[i,'InRatio'+str(x)]
+            TransList[i].inputs[inp] = TransIn.loc[i, 'InRatio'+str(x)]
         k = k + 1
         
     k = 0
     x = 0
     
-    for j in range(len(TransIn.loc[i,'Prod0':])):
-        product = TransIn.loc[i,'Prod'+str(x)]       
-        if k % 2 == 0 and isinstance(product,str):
+    for j in range(len(TransIn.loc[i, 'Prod0':])):
+        product = TransIn.loc[i, 'Prod'+str(x)]       
+        if k % 2 == 0 and isinstance(product, str):
             if not product in EnergyList:
                 EnergyList.append(product)
-            TransList[i].products[product] = TransIn.loc[i,'SubEff'+str(x)]
+            TransList[i].products[product] = TransIn.loc[i, 'SubEff' + str(x)]
             x = x + 1
         k = k + 1
 
@@ -385,12 +385,12 @@ for i in range(len(TransIn.index)):
 
 #Initialize the Hubs   
 for i in range(len(HubIn.index)):
-    HubList.append(Hub(name = HubIn.loc[i,'Name'],
-                       energyType = HubIn.loc[i,'EnergyType'],
-                       capex = HubIn.loc[i,'Capex'],
-                       opexMin = HubIn.loc[i,'OpexMin'],
-                       opexAvg = HubIn.loc[i,'OpexAvg'],
-                       opexMax = HubIn.loc[i,'OpexMax']))
+    HubList.append(Hub(name = HubIn.loc[i, 'Name'],
+                       energyType = HubIn.loc[i, 'EnergyType'],
+                       capex = HubIn.loc[i, 'Capex'],
+                       opexMin = HubIn.loc[i, 'OpexMin'],
+                       opexAvg = HubIn.loc[i, 'OpexAvg'],
+                       opexMax = HubIn.loc[i, 'OpexMax']))
     outcolumns.append(HubList[i].name + 'opex')
     
     for con in ConnList:
@@ -400,27 +400,27 @@ for i in range(len(HubIn.index)):
             HubList[i].outcons.append(con)
     
 
-numIter = RestrIn.loc[0,'NumIterations']
+numIter = RestrIn.loc[0, 'NumIterations']
 #objList = np.zeros(numIter)
 #fuelQuantity = (len(FuelTypeList),numIter)
 #np.zeros(fuelQuantity)
 
 checkModel(ConnList, EnergyList)
 
-dataout = pd.DataFrame(np.zeros((numIter,len(outcolumns))),columns = outcolumns)
+dataout = pd.DataFrame(np.zeros((numIter, len(outcolumns))), columns = outcolumns)
 
 for i in range(numIter):
     
     print('Iteration: ' + str(i))
     
-    randomizeOpex(SourceList,i,dataout)
-    randomizeOpex(SinkList,i,dataout)
-    randomizeOpex(TransList,i,dataout)
-    randomizeOpex(HubList,i,dataout)
+    randomizeOpex(SourceList, i, dataout)
+    randomizeOpex(SinkList, i, dataout)
+    randomizeOpex(TransList, i, dataout)
+    randomizeOpex(HubList, i, dataout)
     
-    randomizeEff(TransList,i,dataout)
+    randomizeEff(TransList, i, dataout)
     
-    randomizeDem(SinkList,i,dataout)
+    randomizeDem(SinkList, i, dataout)
     
     model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
     
@@ -428,13 +428,12 @@ for i in range(numIter):
     
     #Output formatting starts here
 
-    dataout.at[i,'Total Cost'] = model.Obj()
+    dataout.at[i, 'Total Cost'] = model.Obj()
     
     
     for source in SourceList:
-        dataout.at[i,source.energyType] = model.facilities[source].value
+        dataout.at[i, source.energyType] = model.facilities[source].value
     
 dataout.to_excel('output.xlsx', sheet_name='Sheet1')
-
 
 #return 0
