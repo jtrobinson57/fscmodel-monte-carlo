@@ -181,7 +181,11 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
                 etype = con.energyType
                 return tra.products[etype] * M.facilities[tra] == M.connections[con]
         return Constraint.Skip
-
+    
+    for tran in M.trans:
+        M.facilities[tran].setub(tran.outMax)
+        M.facilities[tran].setlb(tran.outMin)
+    
     M.transconstraint = Constraint(M.trans, rule = transrule)
     M.transsum = Constraint(M.trans, rule = transcount)
     M.inputconstraint = Constraint(M.connectors, rule = inputratiorule)
@@ -227,8 +231,9 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     return M
 
 def opti(model):
-    opt = SolverFactory('gurobi')
+    opt = SolverFactory('gurobi', tee = True)
     results = opt.solve(model)
+    print(model.display())
     return results
 
 
@@ -461,7 +466,7 @@ for i in range(numIter):
     try:
         dataout.at[i, 'Total Cost'] = model.Obj()
     except(ValueError):
-        print(chr(27) + "[2J")
+#       print(chr(27) + "[2J")
         print("\nValue Error! Make sure the problem you put in input.xlsx is actually solvable, and doesn't have weird bounds.")
         break
         
