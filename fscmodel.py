@@ -59,7 +59,7 @@ class Sink:
             return self.name < other.name
     
 class Transformer:
-    def __init__(self,name,capex,opexMin,opexAvg,opexMax,totalEffMin,totalEffAvg,totalEffMax):
+    def __init__(self,name,capex,opexMin,opexAvg,opexMax,totalEffMin,totalEffAvg,totalEffMax,outMin,outMax):
         self.name = name
         self.capex = capex
         self.opex = 0
@@ -70,6 +70,8 @@ class Transformer:
         self.totalEffMin = totalEffMin
         self.totalEffAvg = totalEffAvg
         self.totalEffMax = totalEffMax
+        self.outMin = outMin
+        self.outMax = outMax
         self.inputs = {}
         self.products = {}
         self.incons = []
@@ -225,7 +227,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     return M
 
 def opti(model):
-    opt = SolverFactory('baron')
+    opt = SolverFactory('gurobi')
     results = opt.solve(model)
     return results
 
@@ -373,7 +375,9 @@ for i in range(len(TransIn.index)):
                                  opexMax = TransIn.loc[i, 'OpexMax'],
                                  totalEffMin = TransIn.loc[i, 'TotalEffMin'],
                                  totalEffAvg = TransIn.loc[i, 'TotalEffAvg'],
-                                 totalEffMax = TransIn.loc[i, 'TotalEffMax']))
+                                 totalEffMax = TransIn.loc[i, 'TotalEffMax'],
+                                 outMin = TransIn.loc[i, 'OutMin'],
+                                 outMax = TransIn.loc[i, 'OutMax']))
     
     outcolumns.append(TransList[i].name + 'opex')
     outcolumns.append(TransList[i].name + 'TotalEff')
