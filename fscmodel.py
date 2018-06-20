@@ -225,7 +225,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     return M
 
 def opti(model):
-    opt = SolverFactory('gurobi')
+    opt = SolverFactory('baron')
     results = opt.solve(model)
     return results
 
@@ -374,6 +374,7 @@ for i in range(len(TransIn.index)):
                                  totalEffMin = TransIn.loc[i, 'TotalEffMin'],
                                  totalEffAvg = TransIn.loc[i, 'TotalEffAvg'],
                                  totalEffMax = TransIn.loc[i, 'TotalEffMax']))
+    
     outcolumns.append(TransList[i].name + 'opex')
     outcolumns.append(TransList[i].name + 'TotalEff')
     
@@ -453,14 +454,20 @@ for i in range(numIter):
     results = opti(model)
     
     #Output formatting starts here
-
-    dataout.at[i, 'Total Cost'] = model.Obj()
     
+    try:
+        dataout.at[i, 'Total Cost'] = model.Obj()
+    except(ValueError):
+        print(chr(27) + "[2J")
+        print("\nValue Error! Make sure the problem you put in input.xlsx is actually solvable, and doesn't have weird bounds.")
+        break
+        
     dataout.at[i, 'CO2'] = model.carbonsum.value
     
     for source in SourceList:
         dataout.at[i, source.energyType] = model.facilities[source].value
     
 dataout.to_excel('output.xlsx', sheet_name='Sheet1')
+
 
 #return 0
