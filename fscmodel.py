@@ -378,7 +378,6 @@ for i in range(len(TransIn.index)):
     outcolumns.append(TransList[i].name + 'TotalEff')
     
     k = 0
-    x = 0
     
     for j in range(len(TransIn.loc[i, 'Input0':'Prod0'])-1):
         x = int(j/2)
@@ -390,15 +389,14 @@ for i in range(len(TransIn.index)):
         k = k + 1
         
     k = 0
-    x = 0
     
     for j in range(len(TransIn.loc[i, 'Prod0':])):
+        x = int(j/2)
         product = TransIn.loc[i, 'Prod'+str(x)]       
         if k % 2 == 0 and isinstance(product, str):
             if not product in EnergyList:
                 EnergyList.append(product)
             TransList[i].products[product] = TransIn.loc[i, 'SubEff' + str(x)]
-            x = x + 1
         k = k + 1
 
     for con in ConnList:
@@ -406,6 +404,7 @@ for i in range(len(TransIn.index)):
             TransList[i].incons.append(con)
         elif con.inp==TransList[i].name and con.energyType in TransList[i].products:
             TransList[i].outcons.append(con)
+            outcolumns.append(TransList[i].name + '-' + con.energyType)
 
 #Initialize the Hubs   
 for i in range(len(HubIn.index)):
@@ -460,6 +459,10 @@ for i in range(numIter):
     
     for source in SourceList:
         dataout.at[i, source.energyType] = model.facilities[source].value
+        
+    for trans in TransList:
+        for con in trans.outcons:
+            dataout.at[i, (trans.name + '-' + con.energyType)] = model.connections[con].value
     
 dataout.to_excel('output.xlsx', sheet_name='Sheet1')
 
