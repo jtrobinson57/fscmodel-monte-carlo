@@ -433,7 +433,7 @@ for i in range(len(HubIn.index)):
             HubList[i].outcons.append(con)
     
 
-numIter = RestrIn.loc[0, 'NumIterations']
+numIter = int(RestrIn.loc[0, 'NumIterations'])
 #objList = np.zeros(numIter)
 #fuelQuantity = (len(FuelTypeList),numIter)
 #np.zeros(fuelQuantity)
