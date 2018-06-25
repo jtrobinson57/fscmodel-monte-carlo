@@ -4,6 +4,8 @@ Created on Thu Jun  7 13:49:17 2018
 @author: j.robinson
 """
 
+#TEST TEST TEST
+
 from __future__ import division
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
@@ -233,7 +235,6 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
 def opti(model):
     opt = SolverFactory('gurobi', tee = True)
     results = opt.solve(model)
-    print(model.display())
     return results
 
 
