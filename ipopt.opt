@@ -1,0 +1,4 @@
+hessian_approximation limited-memory
+mu_strategy adaptive
+tol 1e-12
+derivative_test first-order

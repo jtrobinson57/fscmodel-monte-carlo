@@ -7,6 +7,7 @@ Created on Thu Jun  7 13:49:17 2018
 from __future__ import division
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
+from gekko import GEKKO
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -117,123 +118,127 @@ class Connection:
         return "Connection:" + self.name + ", " + self.energyType
 
 def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
-    M = ConcreteModel()
     
-    M.connectors = Set(initialize = ConnList)
-    M.sources = Set(initialize = SourceList)
-    M.sinks = Set(initialize = SinkList)
-    M.trans = Set(initialize = TransList)
-    M.hubs = Set(initialize = HubList)
-    M.stations = Set(initialize = SourceList + SinkList + TransList + HubList)
-    
-    M.c = Param(M.stations, mutable = True)
-    M.carbon = Param(M.sources, mutable = True)
-    M.cape = Param(M.stations, mutable = True)
-    
-    #For the amount in facilities, for calculating Opex. For transformer, the amount coming out
-    M.facilities = Var(M.stations, domain = NonNegativeReals)
-    #Whether a facility is being used. For calculating Capex
-    M.isopen = Var(M.stations, domain = Boolean)
-    #Amount going through connectors
-    M.connections = Var(M.connectors, domain = NonNegativeReals)
-    #Amount coming into a transformer. Used to consider transformer production ratio
-    M.trintotals = Var(M.trans, domain = NonNegativeReals)
-    
-    M.carbonsum = Var(domain = NonNegativeReals)
-    
-    #Populates capex costs
-    for fac in M.stations:
-        M.cape[fac] = fac.capex
-    
-    #Constructs cost vector from opex and carbon constraints from sources.
-    for fac in M.stations:
-        M.c[fac] = fac.opex
-        if isinstance(fac, Source):
-            M.carbon[fac] = fac.CO2
+    M = GEKKO()
     
     
-    def sourcecount(model, source):
-        return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
     
-    M.sourcesum = Constraint(M.sources, rule = sourcecount)
-    
-    for source in M.sources:
-        if source.isSet:
-            M.facilities[source].setub(source.usage)
-            M.facilities[source].setlb(source.usage)
-
-    
-    def transrule(model, tra):
-        return M.facilities[tra] == tra.totalEff * M.trintotals[tra]
-    
-    def transcount(model, tra):
-        return M.trintotals[tra] ==  sum(M.connections[con] for con in tra.incons)
-    
-    def inputratiorule(model, con):
-        for tra in TransList:
-            if con in tra.incons:
-                return tra.inputs[con.energyType] * M.trintotals[tra] == M.connections[con]
-        return Constraint.Skip
-     
-    def productratiorule(model, con):
-        for tra in TransList:
-            if con in tra.outcons:
-                etype = con.energyType
-                return tra.products[etype] * M.facilities[tra] == M.connections[con]
-        return Constraint.Skip
-    
-    for tran in M.trans:
-        M.facilities[tran].setub(tran.outMax)
-        M.facilities[tran].setlb(tran.outMin)
-    
-    M.transconstraint = Constraint(M.trans, rule = transrule)
-    M.transsum = Constraint(M.trans, rule = transcount)
-    M.inputconstraint = Constraint(M.connectors, rule = inputratiorule)
-    M.productconstraint = Constraint(M.connectors, rule = productratiorule)
-    
-    
-    def sinkrule(model, sink):
-        return sum(M.connections[con] for con in sink.incons) == sink.demand
-    
-    def sinkcount(model,sink):
-        return M.facilities[sink]== sum(M.connections[con] for con in sink.incons)
-    
-    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
-    M.sinksum = Constraint(M.sinks, rule = sinkcount)
-    
-    
-    def hubrule(model, hub):
-        return sum(M.connections[con] for con in hub.incons)==sum(M.connections[con] for con in hub.outcons)
-    
-    def hubcount(model,hub):
-        return M.facilities[hub] == sum(M.connections[con] for con in hub.incons)
-    
-    M.hubconstraint = Constraint(M.hubs, rule = hubrule)
-    M.hubsum = Constraint(M.hubs, rule = hubcount)
-    
-    #Quadratic constraint that turns isopen on and off
-    def binrule(model, fac):
-        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
-    
-    M.checkopen = Constraint(M.stations, rule = binrule)
-    
-    M.carbonset = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) == M.carbonsum)
-
-
-    M.Co2limit = Constraint(expr = M.carbonsum <= CO2)    
-        
-    def objrule(model):
-       ob = summation(model.facilities, model.c, index = M.stations) + summation(model.cape, model.isopen, index = M.stations)
-       return ob
-            
-    M.Obj = Objective(rule = objrule, sense = minimize)
-            
     return M
+#    M.connectors = Set(initialize = ConnList)
+#    M.sources = Set(initialize = SourceList)
+#    M.sinks = Set(initialize = SinkList)
+#    M.trans = Set(initialize = TransList)
+#    M.hubs = Set(initialize = HubList)
+#    M.stations = Set(initialize = SourceList + SinkList + TransList + HubList)
+#    
+#    M.c = Param(M.stations, mutable = True)
+#    M.carbon = Param(M.sources, mutable = True)
+#    M.cape = Param(M.stations, mutable = True)
+#    
+#    #For the amount in facilities, for calculating Opex. For transformer, the amount coming out
+#    M.facilities = Var(M.stations, domain = NonNegativeReals)
+#    #Whether a facility is being used. For calculating Capex
+#    M.isopen = Var(M.stations, domain = Boolean)
+#    #Amount going through connectors
+#    M.connections = Var(M.connectors, domain = NonNegativeReals)
+#    #Amount coming into a transformer. Used to consider transformer production ratio
+#    M.trintotals = Var(M.trans, domain = NonNegativeReals)
+#    
+#    M.carbonsum = Var(domain = NonNegativeReals)
+#    
+#    #Populates capex costs
+#    for fac in M.stations:
+#        M.cape[fac] = fac.capex
+#    
+#    #Constructs cost vector from opex and carbon constraints from sources.
+#    for fac in M.stations:
+#        M.c[fac] = fac.opex
+#        if isinstance(fac, Source):
+#            M.carbon[fac] = fac.CO2
+#    
+#    
+#    def sourcecount(model, source):
+#        return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
+#    
+#    M.sourcesum = Constraint(M.sources, rule = sourcecount)
+#    
+#    for source in M.sources:
+#        if source.isSet:
+#            M.facilities[source].setub(source.usage)
+#            M.facilities[source].setlb(source.usage)
+#
+#    
+#    def transrule(model, tra):
+#        return M.facilities[tra] == tra.totalEff * M.trintotals[tra]
+#    
+#    def transcount(model, tra):
+#        return M.trintotals[tra] ==  sum(M.connections[con] for con in tra.incons)
+#    
+#    def inputratiorule(model, con):
+#        for tra in TransList:
+#            if con in tra.incons:
+#                return tra.inputs[con.energyType] * M.trintotals[tra] == M.connections[con]
+#        return Constraint.Skip
+#     
+#    def productratiorule(model, con):
+#        for tra in TransList:
+#            if con in tra.outcons:
+#                etype = con.energyType
+#                return tra.products[etype] * M.facilities[tra] == M.connections[con]
+#        return Constraint.Skip
+#    
+#    for tran in M.trans:
+#        M.facilities[tran].setub(tran.outMax)
+#        M.facilities[tran].setlb(tran.outMin)
+#    
+#    M.transconstraint = Constraint(M.trans, rule = transrule)
+#    M.transsum = Constraint(M.trans, rule = transcount)
+#    M.inputconstraint = Constraint(M.connectors, rule = inputratiorule)
+#    M.productconstraint = Constraint(M.connectors, rule = productratiorule)
+#    
+#    
+#    def sinkrule(model, sink):
+#        return sum(M.connections[con] for con in sink.incons) == sink.demand
+#    
+#    def sinkcount(model,sink):
+#        return M.facilities[sink]== sum(M.connections[con] for con in sink.incons)
+#    
+#    M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
+#    M.sinksum = Constraint(M.sinks, rule = sinkcount)
+#    
+#    
+#    def hubrule(model, hub):
+#        return sum(M.connections[con] for con in hub.incons)==sum(M.connections[con] for con in hub.outcons)
+#    
+#    def hubcount(model,hub):
+#        return M.facilities[hub] == sum(M.connections[con] for con in hub.incons)
+#    
+#    M.hubconstraint = Constraint(M.hubs, rule = hubrule)
+#    M.hubsum = Constraint(M.hubs, rule = hubcount)
+#    
+#    #Quadratic constraint that turns isopen on and off
+#    def binrule(model, fac):
+#        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
+#    
+#    M.checkopen = Constraint(M.stations, rule = binrule)
+#    
+#    M.carbonset = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) == M.carbonsum)
+#
+#
+#    M.Co2limit = Constraint(expr = M.carbonsum <= CO2)    
+#        
+#    def objrule(model):
+#       ob = summation(model.facilities, model.c, index = M.stations) + summation(model.cape, model.isopen, index = M.stations)
+#       return ob
+#            
+#    M.Obj = Objective(rule = objrule, sense = minimize)
+#            
+#    return M
 
 def opti(model):
-    opt = SolverFactory('gurobi', tee = True)
+    #executable='C:/Users/j.robinson/AppData/Local/Continuum/anaconda3/pkgs/pyomo-5.5.0-py36_1/Lib/site-packages/pyomo/solvers/plugins/solvers/ipopt'
+    opt = SolverFactory('ipopt',solver_io='nl')
     results = opt.solve(model)
-    print(model.display())
     return results
 
 
@@ -459,27 +464,29 @@ for i in range(numIter):
     
     model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
     
-    results = opti(model)
-    
-    #Output formatting starts here
-    
-    try:
-        dataout.at[i, 'Total Cost'] = model.Obj()
-    except(ValueError):
-#       print(chr(27) + "[2J")
-        print("\nValue Error! Make sure the problem you put in input.xlsx is actually solvable, and doesn't have weird bounds.")
-        break
-        
-    dataout.at[i, 'CO2'] = model.carbonsum.value
-    
-    for source in SourceList:
-        dataout.at[i, source.energyType] = model.facilities[source].value
-        
-    for trans in TransList:
-        for con in trans.outcons:
-            dataout.at[i, (trans.name + '-' + con.energyType)] = model.connections[con].value
-    
-dataout.to_excel('output.xlsx', sheet_name='Sheet1')
-
-
-#return 0
+#    opt = SolverFactory('ipopt',solver_io='nl')
+#    #opt.options['OF_tol']=1e-6
+#    results = opt.solve(model,keepfiles=False,tee=True)
+#    model.load(results)
+#    #Output formatting starts here
+#    
+#    try:
+#        dataout.at[i, 'Total Cost'] = model.Obj()
+#    except(ValueError):
+##       print(chr(27) + "[2J")
+#        print("\nValue Error! Make sure the problem you put in input.xlsx is actually solvable, and doesn't have weird bounds.")
+#        break
+#        
+#    dataout.at[i, 'CO2'] = model.carbonsum.value
+#    
+#    for source in SourceList:
+#        dataout.at[i, source.energyType] = model.facilities[source].value
+#        
+#    for trans in TransList:
+#        for con in trans.outcons:
+#            dataout.at[i, (trans.name + '-' + con.energyType)] = model.connections[con].value
+#    
+#dataout.to_excel('output.xlsx', sheet_name='Sheet1')
+#
+#
+##return 0
