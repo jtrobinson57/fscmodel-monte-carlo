@@ -116,7 +116,7 @@ class Connection:
     def __str__(self):
         return "Connection:" + self.name + ", " + self.energyType
     
-def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, CO2):
+def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M = ConcreteModel()
     
     M.connectors = Set(initialize = ConnList)
@@ -133,7 +133,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, 
     #For the amount in facilities, for calculating Opex. For transformer, the amount coming out
     M.facilities = Var(M.stations, domain = NonNegativeReals)
     #Whether a facility is being used. For calculating Capex
-#    M.isopen = Var(M.stations, domain = Boolean)
+    M.isopen = Var(M.stations, domain = Boolean)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
     #Amount coming into a transformer. Used to consider transformer production ratio
@@ -211,11 +211,11 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, 
     M.hubconstraint = Constraint(M.hubs, rule = hubrule)
     M.hubsum = Constraint(M.hubs, rule = hubcount)
     
-#    #Quadratic constraint that turns isopen on and off
-#    def binrule(model, fac):
-#        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
-#    
-#    M.checkopen = Constraint(M.stations, rule = binrule)
+    #Quadratic constraint that turns isopen on and off
+    def binrule(model, fac):
+        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
+    
+    M.checkopen = Constraint(M.stations, rule = binrule)
     
     M.carbonset = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) == M.carbonsum)
 
@@ -223,7 +223,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, 
     M.Co2limit = Constraint(expr = M.carbonsum <= CO2)    
         
     def objrule(model):
-       ob = summation(model.facilities, model.c, index = M.stations)# + summation(model.cape, model.isopen, index = M.stations)
+       ob = summation(model.facilities, model.c, index = M.stations) + summation(model.cape, model.isopen, index = M.stations)
        return ob
             
     M.Obj = Objective(rule = objrule, sense = minimize)
@@ -459,7 +459,7 @@ for i in range(numIter):
     
     randomizeUsage(SourceList, i, dataout)
     
-    model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, CO2 = CO2Max)
+    model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
     
     results = opti(model)
     
