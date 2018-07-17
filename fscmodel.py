@@ -262,9 +262,10 @@ def randomizeOpex(List, row, dataout):
             
     if(distr == 'rayleigh'):
         for i in List:
-            mode = i.opexAvg * np.sqrt(2 / np.pi)
+            mode = (i.opexAvg - i.opexMin) * np.sqrt(2 / np.pi)
             while True:
                 i.opex = np.random.rayleigh(mode)
+                i.opex = i.opex + i.opexMin
                 if i.opex >= i.opexMin and i.opex <= i.opexMax:
                     break
             dataout.at[row, i.name + 'opex'] = i.opex
@@ -282,9 +283,10 @@ def randomizeEff(List, row, dataout):
             
     if(distr == 'rayleigh'):
         for i in List:
-            mode = i.totalEffAvg * np.sqrt(2 / np.pi)
+            mode = (i.totalEffAvg - i.totalEffMin) * np.sqrt(2 / np.pi)
             while True:
                 i.totalEff = np.random.rayleigh(mode)
+                i.totalEff = i.totalEff + i.totalEffMin
                 if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
                     break
             dataout.at[row, i.name + 'TotalEff'] = i.totalEff
@@ -301,9 +303,10 @@ def randomizeDem(List, row, dataout):
             
     if(distr == 'rayleigh'):
         for i in List:
-            mode = i.demandAvg * np.sqrt(2 / np.pi)
+            mode = (i.demandAvg - i.demandMin) * np.sqrt(2 / np.pi)
             while True:
                 i.demand = np.random.rayleigh(mode)
+                i.demand = i.demand + i.demandMin
                 if i.demand >= i.demandMin and i.demand <= i.demandMax:
                     break
             dataout.at[row, i.name + 'Demand'] = i.demand
@@ -321,11 +324,12 @@ def randomizeUsage(List, row, dataout):
                     
     if(distr == 'rayleigh'):
         for i in List:
-            mode = i.usageAvg * np.sqrt(2 / np.pi)
+            mode = (i.usageAvg - i.usageMin) * np.sqrt(2 / np.pi)
             if i.isSet:
                 dataout.at[row, i.energyType + 'isFixed'] = i.isSet
                 while True:
                     i.usage = np.random.rayleigh(mode)
+                    i.usage = i.usage + i.usageMin
                     if i.usage >= i.usageMin and i.usage <= i.usageMax:
                         break                    
 
