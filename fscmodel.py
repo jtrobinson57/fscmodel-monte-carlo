@@ -242,7 +242,10 @@ def checkModel(ConnList, entypes):
     for con in ConnList:
         if con.energyType not in entypes:
             raise ValueError(str(con) + ' has an unrecognized energy type.')
-    
+            
+    for Source in SourceList:
+        if not Source.outcons:
+            print('\nWARNING: ' + Source.name + ' has empty out connections, so it probably is not being used. Would you like to check that?' + '\n')
         
     #What more can be added?
     return None
@@ -459,7 +462,7 @@ for i in range(numIter):
     
     randomizeUsage(SourceList, i, dataout)
     
-    model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, CO2 = CO2Max)
+    model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
     
     results = opti(model)
     
