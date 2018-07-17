@@ -115,8 +115,8 @@ class Connection:
             return self.name < other.name
     def __str__(self):
         return "Connection:" + self.name + ", " + self.energyType
-
-def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
+    
+def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, CO2):
     M = ConcreteModel()
     
     M.connectors = Set(initialize = ConnList)
@@ -133,7 +133,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     #For the amount in facilities, for calculating Opex. For transformer, the amount coming out
     M.facilities = Var(M.stations, domain = NonNegativeReals)
     #Whether a facility is being used. For calculating Capex
-    M.isopen = Var(M.stations, domain = Boolean)
+#    M.isopen = Var(M.stations, domain = Boolean)
     #Amount going through connectors
     M.connections = Var(M.connectors, domain = NonNegativeReals)
     #Amount coming into a transformer. Used to consider transformer production ratio
@@ -211,11 +211,11 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.hubconstraint = Constraint(M.hubs, rule = hubrule)
     M.hubsum = Constraint(M.hubs, rule = hubcount)
     
-    #Quadratic constraint that turns isopen on and off
-    def binrule(model, fac):
-        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
-    
-    M.checkopen = Constraint(M.stations, rule = binrule)
+#    #Quadratic constraint that turns isopen on and off
+#    def binrule(model, fac):
+#        return M.facilities[fac] - M.isopen[fac]*M.facilities[fac] <= 0
+#    
+#    M.checkopen = Constraint(M.stations, rule = binrule)
     
     M.carbonset = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) == M.carbonsum)
 
@@ -223,7 +223,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.Co2limit = Constraint(expr = M.carbonsum <= CO2)    
         
     def objrule(model):
-       ob = summation(model.facilities, model.c, index = M.stations) + summation(model.cape, model.isopen, index = M.stations)
+       ob = summation(model.facilities, model.c, index = M.stations)# + summation(model.cape, model.isopen, index = M.stations)
        return ob
             
     M.Obj = Objective(rule = objrule, sense = minimize)
@@ -231,9 +231,10 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     return M
 
 def opti(model):
+    model.preprocess()
     opt = SolverFactory('gurobi', tee = True)
     results = opt.solve(model)
-    print(model.display())
+    #print(model.display())
     return results
 
 
@@ -248,45 +249,48 @@ def checkModel(ConnList, entypes):
 
 def randomizeOpex(List, row, dataout):
     
-    for i in List:
-        while True:
-            i.opex = np.random.normal(i.opexAvg,((i.opexMax - i.opexMin)/6))
-            if i.opex >= i.opexMin and i.opex <= i.opexMax:
-                break
-        dataout.at[row, i.name + 'opex'] = i.opex
+    if(distr == 'normal'):
+        for i in List:
+            while True:
+                i.opex = np.random.normal(i.opexAvg,((i.opexMax - i.opexMin)/6))
+                if i.opex >= i.opexMin and i.opex <= i.opexMax:
+                    break
+            dataout.at[row, i.name + 'opex'] = i.opex
 
 def randomizeEff(List, row, dataout):
     
-    for i in List:
-        while True:
-            i.totalEff = np.random.normal(i.totalEffAvg, ((i.totalEffMax - i.totalEffMin)/6))
-            if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
-                break
-        dataout.at[row, i.name + 'TotalEff'] = i.totalEff
+    if(distr == 'normal'):
+        for i in List:
+            while True:
+                i.totalEff = np.random.normal(i.totalEffAvg, ((i.totalEffMax - i.totalEffMin)/6))
+                if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
+                    break
+            dataout.at[row, i.name + 'TotalEff'] = i.totalEff
 
 def randomizeDem(List, row, dataout):
     
-    for i in List:
-        while True:
-            i.demand = np.random.normal(i.demandAvg, ((i.demandMax - i.demandMin)/6))
-            if i.demand >= i.demandMin and i.demand <= i.demandMax:
-                break
-        dataout.at[row, i.name+'Demand'] = i.demand
+    if(distr == 'normal'):
+        for i in List:
+            while True:
+                i.demand = np.random.normal(i.demandAvg, ((i.demandMax - i.demandMin)/6))
+                if i.demand >= i.demandMin and i.demand <= i.demandMax:
+                    break
+            dataout.at[row, i.name+'Demand'] = i.demand
 
 def randomizeUsage(List, row, dataout):
-    for i in List:
-        if i.isSet:
-            dataout.at[row, i.energyType + 'isFixed'] = i.isSet
-            while True:
-                i.usage = np.random.normal(i.usageAvg, ((i.usageMax - i.usageMin)/6)) 
-                if i.usage >= i.usageMin and i.usage <= i.usageMax:
-                    break
-
-
+    
+    if (distr == 'normal'):
+        for i in List:
+            if i.isSet:
+                dataout.at[row, i.energyType + 'isFixed'] = i.isSet
+                while True:
+                    i.usage = np.random.normal(i.usageAvg, ((i.usageMax - i.usageMin)/6)) 
+                    if i.usage >= i.usageMin and i.usage <= i.usageMax:
+                        break
+                    
 
         
 #int main
-
 
 SourceIn  = pd.read_excel('input.xlsx', 'Sources', index_col=None, na_values=['NA'])
 SinkIn    = pd.read_excel('input.xlsx', 'Sinks', index_col=None, na_values=['NA'])
@@ -304,8 +308,10 @@ FuelTypeList = []
 DemandTypeList = []
 outcolumns = ['Total Cost', 'CO2']
 
-#Import restrictions, just CO2 for now
+#Import restrictions
 CO2Max = RestrIn.loc[0, 'CO2 Max']
+distr = RestrIn.loc[0, 'Distribution']
+numIter = int(RestrIn.loc[0, 'NumIterations'])
 
 #Energy sources available from sources
 for i in range(len(SourceIn.index)):
@@ -321,7 +327,6 @@ for i in range(len(SinkIn.index)):
 
 #All energy types 
 EnergyList = FuelTypeList + DemandTypeList
-
 
 
 #Initialize the connectors        
@@ -431,12 +436,6 @@ for i in range(len(HubIn.index)):
             HubList[i].incons.append(con)
         elif con.inp==HubList[i].name and con.energyType==HubList[i].energyType:
             HubList[i].outcons.append(con)
-    
-
-numIter = int(RestrIn.loc[0, 'NumIterations'])
-#objList = np.zeros(numIter)
-#fuelQuantity = (len(FuelTypeList),numIter)
-#np.zeros(fuelQuantity)
 
 checkModel(ConnList, EnergyList)
 
@@ -444,7 +443,10 @@ dataout = pd.DataFrame(np.zeros((numIter, len(outcolumns))), columns = outcolumn
 
 for i in range(numIter):
     
-    print('Iteration: ' + str(i))
+    print('Iteration: ' + str(i) +
+          '\n' + str(int(i/numIter *100)) + 
+          '% Done\n|' + '▓' * int(i/numIter *100) + 
+          '░' * (100-int(i/numIter *100)) + '|')
     
     randomizeOpex(SourceList, i, dataout)
     randomizeOpex(SinkList, i, dataout)
@@ -457,7 +459,7 @@ for i in range(numIter):
     
     randomizeUsage(SourceList, i, dataout)
     
-    model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2 = CO2Max)
+    model = createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2LocList, CO2 = CO2Max)
     
     results = opti(model)
     
@@ -479,7 +481,10 @@ for i in range(numIter):
         for con in trans.outcons:
             dataout.at[i, (trans.name + '-' + con.energyType)] = model.connections[con].value
     
+    print(chr(27) + "[2J")
+    
 dataout.to_excel('output.xlsx', sheet_name='Sheet1')
 
+print('Done! Thank you for flying with us at AirJülich. You can find you luggage and model outputs in the output.xlsx file.')
 
 #return 0

@@ -1,0 +1,66 @@
+section:problem
+name: x43
+sense:minimize
+lower_bound: 57.22599615675545
+number_of_objectives: 1
+number_of_constraints: 50
+number_of_variables: 43
+number_of_binary_variables: 0
+number_of_integer_variables: 0
+number_of_continuous_variables: 43
+number_of_nonzeros: 101
+section:solver
+status: ok
+return_code: 0
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+wall_time: 0.0
+termination_condition: optimal
+termination_message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+section:solution
+status: optimal
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+objective: 57.22599615675545
+gap: 0.0
+var: x1 : 832.7518514046955
+var: x10 : 462.01133780075355
+var: x11 : 22.90341466964939
+var: x12 : 221.321677873672
+var: x13 : 1082.1031798965712
+var: x14 : 8.192512456621314
+var: x15 : 133.5513659715989
+var: x16 : 435.5800405913752
+var: x17 : 1191.448087431694
+var: x2 : 133.5513659715989
+var: x3 : 412.08158542172697
+var: x4 : 8.192512456621314
+var: x5 : 381.41083439574743
+var: x6 : 22.90341466964939
+var: x7 : 1684.8356921659906
+var: x8 : 832.7518514046955
+var: x9 : 412.08158542172697
+var: x18 : 435.5800405913752
+var: x19 : 1191.448087431694
+var: x20 : 462.01133780075355
+var: x34 : 435.5800405913752
+var: x35 : 1099.333848172747
+var: x36 : 462.01133780075355
+var: x37 : 1191.448087431694
+var: x38 : 90.50080372014087
+var: x39 : 33.563886531827045
+var: x40 : 188.50434081900246
+var: x41 : 272.9328129222734
+var: x28 : 1099.333848172747
+var: x24 : 90.50080372014087
+var: x25 : 33.563886531827045
+var: x26 : 188.50434081900246
+var: x27 : 272.93281292227334
+var: x21 : 221.321677873672
+var: x22 : 1082.1031798965712
+var: x23 : 381.41083439574743
+var: x29 : 8.192512456621314
+var: x30 : 22.90341466964939
+var: x31 : 133.5513659715989
+var: x32 : 412.08158542172697
+var: x33 : 832.7518514046955
+var: x42 : 87.214
+var: ONE_VAR_CONSTANT : 1.0

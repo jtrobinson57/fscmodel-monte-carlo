@@ -1,0 +1,66 @@
+section:problem
+name: x43
+sense:minimize
+lower_bound: 43.98655363936239
+number_of_objectives: 1
+number_of_constraints: 50
+number_of_variables: 43
+number_of_binary_variables: 0
+number_of_integer_variables: 0
+number_of_continuous_variables: 43
+number_of_nonzeros: 101
+section:solver
+status: ok
+return_code: 0
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+wall_time: 0.015600204467773438
+termination_condition: optimal
+termination_message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+section:solution
+status: optimal
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+objective: 43.98655363936239
+gap: 0.0
+var: x1 : 217.98142854096326
+var: x10 : 124.39393331951669
+var: x11 : 409.74538438211124
+var: x12 : 1191.448087431694
+var: x13 : 295.20289694058704
+var: x14 : 1561.3259199570464
+var: x15 : 8.31321915260009
+var: x16 : 409.74538438211124
+var: x17 : 8.31321915260009
+var: x2 : 797.4884503152141
+var: x3 : 239.18601633634105
+var: x4 : 1104.1584750797422
+var: x5 : 124.39393331951669
+var: x6 : 22.817652581060383
+var: x7 : 22.817652581060383
+var: x8 : 403.4973820047309
+var: x9 : 797.4884503152141
+var: x18 : 403.4973820047309
+var: x19 : 1191.448087431694
+var: x20 : 295.20289694058704
+var: x34 : 403.4973820047309
+var: x35 : 997.8469494778282
+var: x36 : 295.20289694058704
+var: x37 : 1191.448087431694
+var: x38 : 91.4319946436109
+var: x39 : 33.75127670627909
+var: x40 : 173.64665775456638
+var: x41 : 264.6490413747619
+var: x28 : 997.8469494778282
+var: x24 : 91.43199464361092
+var: x25 : 33.75127670627909
+var: x26 : 173.64665775456638
+var: x27 : 264.6490413747619
+var: x21 : 217.98142854096326
+var: x22 : 1104.1584750797422
+var: x23 : 239.18601633634105
+var: x29 : 8.31321915260009
+var: x30 : 22.817652581060383
+var: x31 : 124.39393331951669
+var: x32 : 409.74538438211124
+var: x33 : 797.4884503152141
+var: x42 : 87.214
+var: ONE_VAR_CONSTANT : 1.0

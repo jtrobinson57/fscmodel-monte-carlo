@@ -1,0 +1,66 @@
+section:problem
+name: x43
+sense:minimize
+lower_bound: 54.4512923785756
+number_of_objectives: 1
+number_of_constraints: 50
+number_of_variables: 43
+number_of_binary_variables: 0
+number_of_integer_variables: 0
+number_of_continuous_variables: 43
+number_of_nonzeros: 101
+section:solver
+status: ok
+return_code: 0
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+wall_time: 0.0
+termination_condition: optimal
+termination_message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+section:solution
+status: optimal
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+objective: 54.4512923785756
+gap: 0.0
+var: x1 : 25.480522931202554
+var: x10 : 25.480522931202554
+var: x11 : 397.9629764643414
+var: x12 : 7.585117877877753
+var: x13 : 1542.987331544607
+var: x14 : 218.9850726904062
+var: x15 : 1046.1046886867714
+var: x16 : 1191.448087431694
+var: x17 : 125.92314043904392
+var: x2 : 327.59896933317685
+var: x3 : 790.027576379539
+var: x4 : 397.9629764643414
+var: x5 : 7.585117877877753
+var: x6 : 277.8975701674293
+var: x7 : 125.92314043904392
+var: x8 : 790.027576379539
+var: x9 : 391.22417755803235
+var: x18 : 391.22417755803235
+var: x19 : 1191.448087431694
+var: x20 : 327.59896933317685
+var: x34 : 391.22417755803235
+var: x35 : 982.793111821806
+var: x36 : 327.5989693331768
+var: x37 : 1191.448087431694
+var: x38 : 81.0499892372948
+var: x39 : 38.92407535682128
+var: x40 : 180.073128611455
+var: x41 : 260.1470265172297
+var: x28 : 982.7931118218061
+var: x24 : 81.04998923729481
+var: x25 : 38.92407535682128
+var: x26 : 180.073128611455
+var: x27 : 260.1470265172297
+var: x21 : 218.9850726904062
+var: x22 : 1046.1046886867714
+var: x23 : 277.8975701674293
+var: x29 : 7.585117877877753
+var: x30 : 25.480522931202554
+var: x31 : 125.92314043904392
+var: x32 : 397.9629764643414
+var: x33 : 790.027576379539
+var: x42 : 87.214
+var: ONE_VAR_CONSTANT : 1.0
