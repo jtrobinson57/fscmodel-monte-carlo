@@ -260,14 +260,23 @@ def randomizeOpex(List, row, dataout):
                     break
             dataout.at[row, i.name + 'opex'] = i.opex
             
-    if(distr == 'rayleigh'):
+    elif(distr == 'rayleigh'):
         for i in List:
-            mode = (i.opexAvg - i.opexMin) * np.sqrt(2 / np.pi)
-            while True:
-                i.opex = np.random.rayleigh(mode)
-                i.opex = i.opex + i.opexMin
-                if i.opex >= i.opexMin and i.opex <= i.opexMax:
-                    break
+            midp = (i.opexMax - i.opexMin) / 2 
+            if(i.opexAvg < (midp + i.opexMin)):
+                mode = (i.opexAvg - i.opexMin) * np.sqrt(2 / np.pi)
+                while True:
+                    i.opex = np.random.rayleigh(mode)
+                    i.opex = i.opex + i.opexMin
+                    if i.opex >= i.opexMin and i.opex <= i.opexMax:
+                        break
+            elif(i.opexAvg >= (midp + i.opexMin)):
+                mode = (i.opexMax - i.opexAvg) * np.sqrt(2 / np.pi)
+                while True:
+                    i.opex = np.random.rayleigh(mode)
+                    i.opex = i.opexMax - i.opex
+                    if i.opex >= i.opexMin and i.opex <= i.opexMax:
+                        break
             dataout.at[row, i.name + 'opex'] = i.opex
             
             
@@ -281,14 +290,23 @@ def randomizeEff(List, row, dataout):
                     break
             dataout.at[row, i.name + 'TotalEff'] = i.totalEff
             
-    if(distr == 'rayleigh'):
+    elif(distr == 'rayleigh'):
         for i in List:
-            mode = (i.totalEffAvg - i.totalEffMin) * np.sqrt(2 / np.pi)
-            while True:
-                i.totalEff = np.random.rayleigh(mode)
-                i.totalEff = i.totalEff + i.totalEffMin
-                if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
-                    break
+            midp = (i.totalEffMax - i.totalEffMin) / 2 
+            if(i.totalEffAvg < (midp + i.totalEffMin)):
+                mode = (i.totalEffAvg - i.totalEffMin) * np.sqrt(2 / np.pi)
+                while True:
+                    i.totalEff = np.random.rayleigh(mode)
+                    i.totalEff = i.totalEff + i.totalEffMin
+                    if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
+                        break
+            elif(i.totalEffAvg >= (midp + i.totalEffMin)):
+                mode = (i.totalEffMax - i.totalEffAvg) * np.sqrt(2 / np.pi)
+                while True:
+                    i.totalEff = np.random.rayleigh(mode)
+                    i.totalEff = i.totalEffMax - i.totalEff
+                    if i.totalEff >= i.totalEffMin and i.totalEff <= i.totalEffMax:
+                        break
             dataout.at[row, i.name + 'TotalEff'] = i.totalEff
             
 def randomizeDem(List, row, dataout):
@@ -301,14 +319,23 @@ def randomizeDem(List, row, dataout):
                     break
             dataout.at[row, i.name+'Demand'] = i.demand
             
-    if(distr == 'rayleigh'):
+    elif(distr == 'rayleigh'):
         for i in List:
-            mode = (i.demandAvg - i.demandMin) * np.sqrt(2 / np.pi)
-            while True:
-                i.demand = np.random.rayleigh(mode)
-                i.demand = i.demand + i.demandMin
-                if i.demand >= i.demandMin and i.demand <= i.demandMax:
-                    break
+            midp = (i.demandMax - i.demandMin) / 2
+            if(i.demandAvg < (midp + i.demandMin)):
+                mode = (i.demandAvg - i.demandMin) * np.sqrt(2 / np.pi)
+                while True:
+                    i.demand = np.random.rayleigh(mode)
+                    i.demand = i.demand + i.demandMin
+                    if i.demand >= i.demandMin and i.demand <= i.demandMax:
+                        break
+            elif(i.demandAvg >= (midp + i.demandMin)):
+                mode = (i.demandMax - i.demandAvg) * np.sqrt(2 / np.pi)
+                while True:
+                    i.demand = np.random.rayleigh(mode)
+                    i.demand = i.demandMax - i.demand
+                    if i.demand >= i.demandMin and i.demand <= i.demandMax:
+                        break
             dataout.at[row, i.name + 'Demand'] = i.demand
 
 def randomizeUsage(List, row, dataout):
@@ -324,14 +351,25 @@ def randomizeUsage(List, row, dataout):
                     
     if(distr == 'rayleigh'):
         for i in List:
-            mode = (i.usageAvg - i.usageMin) * np.sqrt(2 / np.pi)
-            if i.isSet:
-                dataout.at[row, i.energyType + 'isFixed'] = i.isSet
-                while True:
-                    i.usage = np.random.rayleigh(mode)
-                    i.usage = i.usage + i.usageMin
-                    if i.usage >= i.usageMin and i.usage <= i.usageMax:
-                        break                    
+            midp = (i.usageMax - i.usageMin) / 2
+            if(i.usageAvg < (midp + i.usageMin)):
+                mode = (i.usageAvg - i.usageMin) * np.sqrt(2 / np.pi)
+                if i.isSet:
+                    dataout.at[row, i.energyType + 'isFixed'] = i.isSet
+                    while True:
+                        i.usage = np.random.rayleigh(mode)
+                        i.usage = i.usage + i.usageMin
+                        if i.usage >= i.usageMin and i.usage <= i.usageMax:
+                            break
+            elif(i.usageAvg >= (midp + i.usageMin)):
+                mode = (i.usageMax - i.usageAvg) * np.sqrt(2 / np.pi)
+                if i.isSet:
+                    dataout.at[row, i.energyType + 'isFixed'] = i.isSet
+                    while True:
+                        i.usage = np.random.rayleigh(mode)
+                        i.usage = i.usageMax - i.usage
+                        if i.usage >= i.usageMin and i.usage <= i.usageMax:
+                            break
 
         
 #int main
