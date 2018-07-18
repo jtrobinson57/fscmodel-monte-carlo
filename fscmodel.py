@@ -151,7 +151,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
         if isinstance(fac, Source):
             M.carbon[fac] = fac.CO2
     
-    
+    #Source related equations
     def sourcecount(model, source):
         return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
     
@@ -162,7 +162,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
             M.facilities[source].setub(source.usage)
             M.facilities[source].setlb(source.usage)
 
-    
+    #Transformer related equations
     def transrule(model, tra):
         return M.facilities[tra] == tra.totalEff * M.trintotals[tra]
     
@@ -191,7 +191,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.inputconstraint = Constraint(M.connectors, rule = inputratiorule)
     M.productconstraint = Constraint(M.connectors, rule = productratiorule)
     
-    
+    #Sink related equations
     def sinkrule(model, sink):
         return sum(M.connections[con] for con in sink.incons) == sink.demand
     
@@ -201,7 +201,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.sinkconstraint = Constraint(M.sinks, rule = sinkrule)
     M.sinksum = Constraint(M.sinks, rule = sinkcount)
     
-    
+    #Hub related equations
     def hubrule(model, hub):
         return sum(M.connections[con] for con in hub.incons)==sum(M.connections[con] for con in hub.outcons)
     
@@ -218,7 +218,6 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.checkopen = Constraint(M.stations, rule = binrule)
     
     M.carbonset = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) == M.carbonsum)
-
 
     M.Co2limit = Constraint(expr = M.carbonsum <= CO2)    
         
@@ -246,7 +245,9 @@ def checkModel(ConnList, entypes):
     for Source in SourceList:
         if not Source.outcons:
             print('\nWARNING: ' + Source.name + ' has empty out connections, so it probably is not being used. Would you like to check that?' + '\n')
-        
+
+    if distr not in ['normal', 'rayleigh']:
+        raise ValueError(distr + ' is not a valid distribution, or has not been implemented yet.')       
     #What more can be added?
     return None
 
@@ -440,7 +441,6 @@ for i in range(len(SinkIn.index)):
 #All energy types 
 EnergyList = FuelTypeList + DemandTypeList
 
-
 #Initialize the connectors        
 for i in range(len(ConnIn.index)):
     ConnList.append(Connection(name = ConnIn.loc[i, 'Name'],
@@ -463,7 +463,6 @@ for i in range(len(SourceIn.index)):
                              usageMax = SourceIn.loc[i, 'UsageMax']))
     
     outcolumns.append(SourceList[i].name + 'opex')
-
     
     for con in ConnList:
         if con.inp==SourceList[i].name and con.energyType==SourceList[i].energyType:
