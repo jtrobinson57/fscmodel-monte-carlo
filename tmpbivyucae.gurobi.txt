@@ -1,0 +1,83 @@
+section:problem
+name: x60
+sense:minimize
+lower_bound: 40.548031763042744
+number_of_objectives: 1
+number_of_constraints: 67
+number_of_variables: 60
+number_of_binary_variables: 17
+number_of_integer_variables: 17
+number_of_continuous_variables: 43
+number_of_nonzeros: 101
+section:solver
+status: ok
+return_code: 0
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+wall_time: 0.015600204467773438
+termination_condition: optimal
+termination_message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+section:solution
+status: optimal
+message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
+objective: 40.548031763042744
+gap: 0.0
+var: x1 : 24.775855032318308
+var: x10 : 242.33197211512066
+var: x11 : 253.72157965166232
+var: x12 : 8.061486941869159
+var: x13 : 8.061486941869159
+var: x14 : 877.6893824254951
+var: x15 : 394.35826020657953
+var: x16 : 1609.3766640710905
+var: x17 : 411.64011519373014
+var: x18 : 1.0
+var: x19 : 1.0
+var: x2 : 123.63617047454028
+var: x20 : 1.0
+var: x21 : 1.0
+var: x22 : 1.0
+var: x23 : 1.0
+var: x24 : 1.0
+var: x25 : 1.0
+var: x26 : 1.0
+var: x27 : 1.0
+var: x28 : 1.0
+var: x29 : 1.0
+var: x3 : 24.775855032318308
+var: x30 : 1.0
+var: x31 : 1.0
+var: x32 : 1.0
+var: x33 : 1.0
+var: x34 : 1.0
+var: x4 : 303.05849215635953
+var: x5 : 1113.3231123043076
+var: x6 : 1191.448087431694
+var: x7 : 877.6893824254951
+var: x8 : 394.35826020657953
+var: x9 : 123.63617047454026
+var: x35 : 411.64011519373014
+var: x36 : 1191.448087431694
+var: x37 : 303.05849215635953
+var: x51 : 411.64011519373014
+var: x52 : 1057.5023857664771
+var: x53 : 303.05849215635953
+var: x54 : 1191.448087431694
+var: x55 : 89.44829377073891
+var: x56 : 37.03210515422626
+var: x57 : 173.1534093832061
+var: x58 : 252.24046999644233
+var: x45 : 1057.5023857664771
+var: x41 : 89.44829377073891
+var: x42 : 37.03210515422626
+var: x43 : 173.1534093832061
+var: x44 : 252.24046999644233
+var: x38 : 242.33197211512066
+var: x39 : 1113.3231123043076
+var: x40 : 253.7215796516623
+var: x46 : 8.061486941869159
+var: x47 : 24.775855032318308
+var: x48 : 123.63617047454026
+var: x49 : 394.35826020657953
+var: x50 : 877.6893824254951
+var: x59 : 87.214
+var: ONE_VAR_CONSTANT : 1.0
