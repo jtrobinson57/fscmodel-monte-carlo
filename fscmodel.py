@@ -598,16 +598,20 @@ dataout.to_excel('output.xlsx', sheet_name='Sheet1')
 
 print('Done! Thank you for flying with us at AirJülich. You can find you luggage and model outputs in the output.xlsx file.')
 
-histData = dataout.loc[:,'hydrogen']
+#This section outputs any requested histograms
 
-n, bins, patches = plt.hist(histData, 10, facecolor = 'g', alpha = 0.75)
+histoList = RestrIn.loc[:,'Histograms']
+histoNum = len(histoList)
 
-plt.xlabel('Amt Hydro')
-plt.ylabel('Frequency')
-plt.title('Histogram of Hydrogen Usage')
-#plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
-plt.axis([min(histData)*0.8, max(histData)*1.2, 0, numIter/3])
-plt.grid(True)
-plt.show()
-
-#return 0
+for i in range(histoNum):
+    
+    histoData = dataout.loc[:,histoList[i]]
+    n, bins, patches = plt.hist(histoData, 10, facecolor = 'g', alpha = 0.75)
+    
+    plt.xlabel(histoList[i])
+    plt.ylabel('Frequency')
+    plt.title('Histogram of ' + histoList[i])
+    plt.axis([min(histoData)*0.8, max(histoData)*1.2, 0, numIter/3])
+    plt.grid(True)
+    plt.show()
+    
