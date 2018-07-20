@@ -152,29 +152,35 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
             M.carbon[fac] = fac.CO2
     
     #Source related equations
+    #The amount of fuel coming from a source equals the total amount of fuel going through the connections which come out of that source.
     def sourcecount(model, source):
         return M.facilities[source] == sum(M.connections[con] for con in source.outcons)
     
     M.sourcesum = Constraint(M.sources, rule = sourcecount)
     
+    #Set maximum and minimum on the variables.
     for source in M.sources:
         if source.isSet:
             M.facilities[source].setub(source.usage)
             M.facilities[source].setlb(source.usage)
 
     #Transformer related equations
+    #The total energy leaving a transformer equals the total efficiency times the total coming into the transformer.
     def transrule(model, tra):
         return M.facilities[tra] == tra.totalEff * M.trintotals[tra]
     
+    #The total fuel entering a transformer equals the sum of the fuel in the connections which lead to that transformer.
     def transcount(model, tra):
         return M.trintotals[tra] ==  sum(M.connections[con] for con in tra.incons)
     
+    #For energy types that enter the transformer, the amount that comes in (through their specific connection) is equal to the input ratio times the total transformer input.
     def inputratiorule(model, con):
         for tra in TransList:
             if con in tra.incons:
                 return tra.inputs[con.energyType] * M.trintotals[tra] == M.connections[con]
         return Constraint.Skip
-     
+    
+    #For energy types that leave the transformer, the amount leaving (through the specific connection) is exactly equal to the production ration times the total transformer output.
     def productratiorule(model, con):
         for tra in TransList:
             if con in tra.outcons:
@@ -192,6 +198,7 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.productconstraint = Constraint(M.connectors, rule = productratiorule)
     
     #Sink related equations
+    #The total amount that enters a sink (to satisfy demand) equals the sum of all connections that enter that sink, and it equals demand.
     def sinkrule(model, sink):
         return sum(M.connections[con] for con in sink.incons) == sink.demand
     
@@ -202,9 +209,11 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     M.sinksum = Constraint(M.sinks, rule = sinkcount)
     
     #Hub related equations
+    #The total amount going into a hub must equal the amount which leaves it. No created energy.
     def hubrule(model, hub):
         return sum(M.connections[con] for con in hub.incons)==sum(M.connections[con] for con in hub.outcons)
     
+    #counts up the amount flowing through a hub, so that it can be displayed.
     def hubcount(model,hub):
         return M.facilities[hub] == sum(M.connections[con] for con in hub.incons)
     
@@ -217,8 +226,9 @@ def createModel(SourceList, SinkList, TransList, ConnList, HubList, CO2):
     
     M.checkopen = Constraint(M.stations, rule = binrule)
     
+    #Totals up the carbon being used by the system, only considering from sources.
     M.carbonset = Constraint(expr = summation(M.facilities, M.carbon, index = M.sources) == M.carbonsum)
-
+    #Limits that CO2
     M.Co2limit = Constraint(expr = M.carbonsum <= CO2)    
         
     def objrule(model):
