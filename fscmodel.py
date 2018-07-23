@@ -616,7 +616,7 @@ histoNum = len(histoList)
 for i in range(histoNum):
     
     histoData = dataout.loc[:,histoList[i]]
-    n, bins, patches = plt.hist(histoData, 10, facecolor = 'g', alpha = 0.75)
+    n, bins, patches = plt.hist(histoData, int(RestrIn.loc[0,'HistogramBars']), facecolor = 'g', alpha = 0.75)
     
     plt.xlabel(histoList[i])
     plt.ylabel('Frequency')
